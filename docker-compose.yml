@@ -1,0 +1,40 @@
+# ====================================================================
+# DOCKER COMPOSE - Firefly Optimizer (Backend + Frontend)
+# ====================================================================
+
+services:
+  # Backend Flask API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: firefly-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    restart: unless-stopped
+    networks:
+      - firefly-network
+
+  # Frontend Static
+  frontend:
+    build:
+      context: ./frontend-simple
+      dockerfile: Dockerfile
+    container_name: firefly-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - firefly-network
+
+networks:
+  firefly-network:
+    driver: bridge

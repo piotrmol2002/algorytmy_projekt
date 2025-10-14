@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firefly Optimizer</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 50px rgba(0,0,0,0.2);
+      padding: 30px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #666;
+    }
+
+    .info-box {
+      background: #f0f7ff;
+      border-left: 4px solid #4CAF50;
+      padding: 15px;
+      margin-bottom: 25px;
+      border-radius: 5px;
+    }
+
+    .form-section {
+      background: #f9f9f9;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+
+    .form-section h2 {
+      color: #333;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #444;
+      font-weight: 600;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 40px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1em;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      transition: all 0.3s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 30px;
+    }
+
+    .loading.active {
+      display: block;
+    }
+
+    .results {
+      display: none;
+      margin-top: 30px;
+    }
+
+    .results.active {
+      display: block;
+    }
+
+    .cost-card {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .cost-card h3 {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+
+    .cost-value {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .improvement-card {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .improvement-card h3 {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+
+    .improvement-value {
+      font-size: 3em;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .metric-card {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      border: 2px solid #ddd;
+    }
+
+    .metric-card h3 {
+      margin-bottom: 15px;
+      font-size: 1.3em;
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      margin-bottom: 5px;
+      background: white;
+      border-radius: 5px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .plots-section {
+      margin-top: 30px;
+    }
+
+    .plots-section h2 {
+      color: #333;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    .plot-container {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .plot-container h3 {
+      color: #555;
+      margin-bottom: 15px;
+    }
+
+    .plot-container img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .objective-info {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+
+    .objective-info strong {
+      color: #856404;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #ddd;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: #666;
+      font-size: 1em;
+      transition: all 0.3s;
+      width: auto;
+      margin: 0;
+    }
+
+    .tab:hover {
+      color: #667eea;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+      font-weight: bold;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [objectives, setObjectives] = useState([]);
+      const [selectedObjective, setSelectedObjective] = useState('mean_response_time');
+      const [numStations, setNumStations] = useState(3);
+      const [numCustomers, setNumCustomers] = useState(20);
+      const [stations, setStations] = useState([
+        { name: 'Stacja 1', serviceRate: 5.0, numServers: 2 },
+        { name: 'Stacja 2', serviceRate: 3.0, numServers: 2 },
+        { name: 'Stacja 3', serviceRate: 4.0, numServers: 2 }
+      ]);
+      const [loading, setLoading] = useState(false);
+      const [results, setResults] = useState(null);
+      const [activeTab, setActiveTab] = useState('summary');
+
+      useEffect(() => {
+        fetchObjectives();
+      }, []);
+
+      const fetchObjectives = async () => {
+        try {
+          const response = await axios.get('/api/objectives');
+          setObjectives(response.data);
+          if (response.data.length > 0) {
+            setSelectedObjective(response.data[0].id);
+          }
+        } catch (err) {
+          console.error('Błąd:', err);
+        }
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setResults(null);
+        setActiveTab('summary');
+
+        const formData = {
+          num_stations: numStations,
+          num_customers: numCustomers,
+          objective: selectedObjective,
+          optimize_vars: ['num_servers'],
+          server_min: 1,
+          server_max: 10,
+          n_fireflies: 25,
+          max_iterations: 100,
+          alpha: 0.5,
+          beta_0: 1.0,
+          gamma: 1.0
+        };
+
+        stations.forEach((station, i) => {
+          formData[`station_name_${i}`] = station.name;
+          formData[`service_rate_${i}`] = station.serviceRate;
+          formData[`num_servers_${i}`] = station.numServers;
+        });
+
+        try {
+          const response = await axios.post('/optimize', formData);
+          if (response.data.success) {
+            setResults(response.data);
+          }
+        } catch (err) {
+          alert('Błąd optymalizacji: ' + err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const getObjectiveInfo = () => {
+        return objectives.find(obj => obj.id === selectedObjective);
+      };
+
+      const formatMetricValue = (value, metric) => {
+        if (typeof value === 'number') {
+          return value.toFixed(4);
+        }
+        return value;
+      };
+
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>🔥 Firefly Optimizer</h1>
+            <p className="subtitle">Optymalizacja systemów kolejkowych zamkniętych</p>
+          </div>
+
+          <div className="info-box">
+            <strong>Algorytm Firefly</strong><br/>
+            Wprowadź model systemu kolejkowego, wybierz funkcję celu i uruchom optymalizację.
+            Program najpierw wyświetli charakterystyki początkowe, a następnie zoptymalizuje system.
+          </div>
+
+          {!loading && !results && (
+            <form onSubmit={handleSubmit}>
+              <div className="form-section">
+                <h2>1. Konfiguracja systemu kolejkowego</h2>
+                <div className="grid">
+                  <div className="form-group">
+                    <label>Liczba stacji</label>
+                    <input
+                      type="number"
+                      value={numStations}
+                      onChange={(e) => setNumStations(parseInt(e.target.value))}
+                      min="1"
+                      max="10"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Liczba klientów w systemie</label>
+                    <input
+                      type="number"
+                      value={numCustomers}
+                      onChange={(e) => setNumCustomers(parseInt(e.target.value))}
+                      min="1"
+                    />
+                  </div>
+                </div>
+
+                {stations.map((station, idx) => (
+                  <div key={idx} style={{marginTop: '20px', padding: '15px', background: 'white', borderRadius: '5px'}}>
+                    <h4 style={{marginBottom: '10px', color: '#667eea'}}>Stacja {idx + 1}</h4>
+                    <div className="grid">
+                      <div className="form-group">
+                        <label>Tempo obsługi (μ)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={station.serviceRate}
+                          onChange={(e) => {
+                            const newStations = [...stations];
+                            newStations[idx].serviceRate = parseFloat(e.target.value);
+                            setStations(newStations);
+                          }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Liczba serwerów</label>
+                        <input
+                          type="number"
+                          value={station.numServers}
+                          onChange={(e) => {
+                            const newStations = [...stations];
+                            newStations[idx].numServers = parseInt(e.target.value);
+                            setStations(newStations);
+                          }}
+                          min="1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="form-section">
+                <h2>2. Wybór funkcji celu</h2>
+                <div className="form-group">
+                  <label>Co chcesz zoptymalizować?</label>
+                  <select
+                    value={selectedObjective}
+                    onChange={(e) => setSelectedObjective(e.target.value)}
+                  >
+                    {objectives.map(obj => (
+                      <option key={obj.id} value={obj.id}>
+                        {obj.name} - {obj.description}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {getObjectiveInfo() && (
+                  <div className="objective-info">
+                    <strong>Wybrany cel:</strong> {getObjectiveInfo().name}<br/>
+                    <strong>Opis:</strong> {getObjectiveInfo().description}<br/>
+                    <strong>Cel:</strong> {getObjectiveInfo().goal === 'minimize' ? 'Minimalizacja' : 'Maksymalizacja'}
+                  </div>
+                )}
+              </div>
+
+              <button type="submit">🚀 Uruchom optymalizację</button>
+            </form>
+          )}
+
+          {loading && (
+            <div className="loading active">
+              <h2>⏳ Optymalizacja w toku...</h2>
+              <p>Algorytm Firefly przeszukuje przestrzeń rozwiązań</p>
+              <p style={{marginTop: '10px', color: '#666'}}>
+                Cel: {getObjectiveInfo()?.name}
+              </p>
+            </div>
+          )}
+
+          {results && (
+            <div className="results active">
+              <h2>📊 Wyniki optymalizacji</h2>
+
+              <div className="objective-info" style={{marginBottom: '20px'}}>
+                <strong>Zoptymalizowany cel:</strong> {objectives.find(o => o.id === selectedObjective)?.name}
+              </div>
+
+              <div className="tabs">
+                <button
+                  className={`tab ${activeTab === 'summary' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('summary')}
+                >
+                  Podsumowanie
+                </button>
+                <button
+                  className={`tab ${activeTab === 'metrics' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('metrics')}
+                >
+                  Szczegółowe metryki
+                </button>
+                <button
+                  className={`tab ${activeTab === 'plots' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('plots')}
+                >
+                  Wykresy
+                </button>
+              </div>
+
+              <div className={`tab-content ${activeTab === 'summary' ? 'active' : ''}`}>
+                <div className="grid">
+                  <div className="cost-card">
+                    <h3>Koszt optymalizacji</h3>
+                    <div className="cost-value">
+                      {results.results.improvement.absolute > 0 ? '+' : ''}
+                      {formatMetricValue(results.results.improvement.absolute)}
+                    </div>
+                    <p style={{fontSize: '0.9em'}}>
+                      {objectives.find(o => o.id === selectedObjective)?.unit || 'jednostek'}
+                    </p>
+                  </div>
+
+                  <div className="improvement-card">
+                    <h3>Procentowa poprawa</h3>
+                    <div className="improvement-value">
+                      {results.results.improvement.percent.toFixed(2)}%
+                    </div>
+                    <p style={{fontSize: '0.9em'}}>
+                      {results.results.improvement.percent > 0 ? 'Poprawa' : 'Pogorszenie'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid">
+                  <div className="metric-card">
+                    <h3>🔴 Przed optymalizacją</h3>
+                    <div className="metric-row">
+                      <span>Konfiguracja serwerów:</span>
+                      <strong>[{results.results.baseline.network.num_servers.join(', ')}]</strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Wartość funkcji celu:</span>
+                      <strong>
+                        {formatMetricValue(
+                          results.results.baseline.metrics[selectedObjective]
+                        )}
+                      </strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Średni czas odpowiedzi:</span>
+                      <strong>{formatMetricValue(results.results.baseline.metrics.mean_response_time)} s</strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Przepustowość:</span>
+                      <strong>{formatMetricValue(results.results.baseline.metrics.throughput)} zadań/s</strong>
+                    </div>
+                  </div>
+
+                  <div className="metric-card">
+                    <h3>🟢 Po optymalizacji</h3>
+                    <div className="metric-row">
+                      <span>Konfiguracja serwerów:</span>
+                      <strong>[{results.results.optimized.network.num_servers.join(', ')}]</strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Wartość funkcji celu:</span>
+                      <strong>
+                        {formatMetricValue(
+                          results.results.optimized.metrics[selectedObjective]
+                        )}
+                      </strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Średni czas odpowiedzi:</span>
+                      <strong>{formatMetricValue(results.results.optimized.metrics.mean_response_time)} s</strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Przepustowość:</span>
+                      <strong>{formatMetricValue(results.results.optimized.metrics.throughput)} zadań/s</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`tab-content ${activeTab === 'metrics' ? 'active' : ''}`}>
+                <div className="grid">
+                  <div className="metric-card">
+                    <h3>📈 Charakterystyki początkowe</h3>
+                    <div className="metric-row">
+                      <span>Średni czas odpowiedzi:</span>
+                      <strong>{formatMetricValue(results.results.baseline.metrics.mean_response_time)} s</strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Średnia długość kolejki:</span>
+                      <strong>{formatMetricValue(results.results.baseline.metrics.mean_queue_length)}</strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Maksymalna długość kolejki:</span>
+                      <strong>{formatMetricValue(results.results.baseline.metrics.max_queue_length)}</strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Przepustowość:</span>
+                      <strong>{formatMetricValue(results.results.baseline.metrics.throughput)} zadań/s</strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Wariancja wykorzystania:</span>
+                      <strong>{formatMetricValue(results.results.baseline.metrics.utilization_variance)}</strong>
+                    </div>
+                    <div style={{marginTop: '15px'}}>
+                      <strong>Długości kolejek:</strong>
+                      <div style={{display: 'flex', gap: '10px', marginTop: '5px', flexWrap: 'wrap'}}>
+                        {results.results.baseline.metrics.queue_lengths.map((ql, idx) => (
+                          <span key={idx} style={{background: '#e3f2fd', padding: '5px 10px', borderRadius: '5px'}}>
+                            Stacja {idx + 1}: {formatMetricValue(ql)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{marginTop: '15px'}}>
+                      <strong>Wykorzystanie serwerów:</strong>
+                      <div style={{display: 'flex', gap: '10px', marginTop: '5px', flexWrap: 'wrap'}}>
+                        {results.results.baseline.metrics.utilizations.map((util, idx) => (
+                          <span key={idx} style={{background: '#fff3cd', padding: '5px 10px', borderRadius: '5px'}}>
+                            Stacja {idx + 1}: {formatMetricValue(util * 100)}%
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="metric-card">
+                    <h3>🎯 Charakterystyki po optymalizacji</h3>
+                    <div className="metric-row">
+                      <span>Średni czas odpowiedzi:</span>
+                      <strong>{formatMetricValue(results.results.optimized.metrics.mean_response_time)} s</strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Średnia długość kolejki:</span>
+                      <strong>{formatMetricValue(results.results.optimized.metrics.mean_queue_length)}</strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Maksymalna długość kolejki:</span>
+                      <strong>{formatMetricValue(results.results.optimized.metrics.max_queue_length)}</strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Przepustowość:</span>
+                      <strong>{formatMetricValue(results.results.optimized.metrics.throughput)} zadań/s</strong>
+                    </div>
+                    <div className="metric-row">
+                      <span>Wariancja wykorzystania:</span>
+                      <strong>{formatMetricValue(results.results.optimized.metrics.utilization_variance)}</strong>
+                    </div>
+                    <div style={{marginTop: '15px'}}>
+                      <strong>Długości kolejek:</strong>
+                      <div style={{display: 'flex', gap: '10px', marginTop: '5px', flexWrap: 'wrap'}}>
+                        {results.results.optimized.metrics.queue_lengths.map((ql, idx) => (
+                          <span key={idx} style={{background: '#e8f5e9', padding: '5px 10px', borderRadius: '5px'}}>
+                            Stacja {idx + 1}: {formatMetricValue(ql)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{marginTop: '15px'}}>
+                      <strong>Wykorzystanie serwerów:</strong>
+                      <div style={{display: 'flex', gap: '10px', marginTop: '5px', flexWrap: 'wrap'}}>
+                        {results.results.optimized.metrics.utilizations.map((util, idx) => (
+                          <span key={idx} style={{background: '#f1f8e9', padding: '5px 10px', borderRadius: '5px'}}>
+                            Stacja {idx + 1}: {formatMetricValue(util * 100)}%
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`tab-content ${activeTab === 'plots' ? 'active' : ''}`}>
+                <div className="plots-section">
+                  <h2>📈 Wykresy porównawcze</h2>
+
+                  {results.plots.convergence && (
+                    <div className="plot-container">
+                      <h3>Zbieżność algorytmu Firefly</h3>
+                      <img src={`data:image/png;base64,${results.plots.convergence}`} alt="Wykres zbieżności" />
+                    </div>
+                  )}
+
+                  {results.plots.metrics_comparison && (
+                    <div className="plot-container">
+                      <h3>Porównanie metryk: Przed vs Po</h3>
+                      <img src={`data:image/png;base64,${results.plots.metrics_comparison}`} alt="Porównanie metryk" />
+                    </div>
+                  )}
+
+                  {results.plots.queue_lengths && (
+                    <div className="plot-container">
+                      <h3>Długości kolejek: Przed vs Po</h3>
+                      <img src={`data:image/png;base64,${results.plots.queue_lengths}`} alt="Porównanie kolejek" />
+                    </div>
+                  )}
+
+                  {results.plots.utilization && (
+                    <div className="plot-container">
+                      <h3>Wykorzystanie serwerów: Przed vs Po</h3>
+                      <img src={`data:image/png;base64,${results.plots.utilization}`} alt="Porównanie wykorzystania" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <button onClick={() => setResults(null)} style={{marginTop: '30px'}}>
+                🔄 Nowa optymalizacja
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>

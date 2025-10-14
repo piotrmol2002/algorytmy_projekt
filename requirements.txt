@@ -1,0 +1,22 @@
+# ===================================================================
+# ZALEŻNOŚCI DLA PROJEKTU OPTYMALIZACJI SYSTEMÓW KOLEJKOWYCH
+# Instalacja: pip install -r requirements.txt
+# ===================================================================
+
+# Framework webowy - do budowy interfejsu lokalnego
+flask==3.0.0
+flask-cors==4.0.0
+
+# Obliczenia numeryczne
+numpy==1.26.2
+scipy==1.11.4
+
+# Wizualizacja danych i wykresów
+matplotlib==3.8.2
+plotly==5.18.0
+
+# Obsługa formularzy i walidacja danych
+wtforms==3.1.1
+
+# Dodatkowe narzędzia
+pandas==2.1.4

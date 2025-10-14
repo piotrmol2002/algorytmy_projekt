@@ -1,0 +1,1 @@
+# Moduł visualization - wizualizacja wyników

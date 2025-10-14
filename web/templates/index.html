@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firefly Optimizer - Optymalizacja Systemów Kolejkowych</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .info-box {
+            background: #f0f7ff;
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .form-section {
+            background: #f9f9f9;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .form-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #444;
+            font-weight: 600;
+        }
+
+        .help-text {
+            font-size: 0.9em;
+            color: #777;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .station-config {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .station-header {
+            background: #667eea;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: #f9f9f9;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+
+        .result-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .metric-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .metric-value {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .improvement-box {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .plot-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .plot-container img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .plot-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #c62828;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Firefly Optimizer</h1>
+        <p class="subtitle">Optymalizacja zamkniętych systemów kolejkowych algorytmem świetlika</p>
+
+        <div class="info-box">
+            <h3>📚 Jak korzystać z aplikacji?</h3>
+            <p>
+                <strong>1.</strong> Zdefiniuj swoją sieć kolejkową: podaj liczbę stacji i klientów<br>
+                <strong>2.</strong> Skonfiguruj każdą stację: nazwa, szybkość obsługi, liczba serwerów<br>
+                <strong>3.</strong> Wybierz funkcję celu: co chcesz optymalizować (czas, kolejki, etc.)<br>
+                <strong>4.</strong> Ustaw parametry algorytmu Firefly<br>
+                <strong>5.</strong> Kliknij "Optymalizuj" i poczekaj na wyniki!
+            </p>
+        </div>
+
+        <form id="optimizerForm">
+            <!-- SEKCJA 1: Definicja sieci -->
+            <div class="form-section">
+                <h2>1️⃣ Definicja sieci kolejkowej</h2>
+
+                <div class="two-column">
+                    <div class="form-group">
+                        <label for="num_stations">Liczba stacji (K)</label>
+                        <input type="number" id="num_stations" name="num_stations" min="2" max="10" value="3" required>
+                        <div class="help-text">Ile stacji obsługi ma Twoja sieć? (np. procesory, serwery)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="num_customers">Liczba klientów (N)</label>
+                        <input type="number" id="num_customers" name="num_customers" min="1" max="100" value="20" required>
+                        <div class="help-text">Ile zadań/klientów krąży w systemie?</div>
+                    </div>
+                </div>
+
+                <button type="button" onclick="generateStations()">Generuj konfigurację stacji</button>
+            </div>
+
+            <!-- SEKCJA 2: Konfiguracja stacji -->
+            <div class="form-section" id="stationsSection" style="display:none;">
+                <h2>2️⃣ Konfiguracja stacji</h2>
+                <div id="stationsContainer"></div>
+            </div>
+
+            <!-- SEKCJA 3: Funkcja celu -->
+            <div class="form-section">
+                <h2>3️⃣ Funkcja celu (co optymalizujemy?)</h2>
+
+                <div class="form-group">
+                    <label for="objective">Wybierz funkcję celu</label>
+                    <select id="objective" name="objective" required>
+                        {% for obj in objectives %}
+                        <option value="{{ obj.id }}">{{ obj.name }} - {{ obj.description }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="help-text">Algorytm będzie minimalizował/maksymalizował wybraną metrykę</div>
+                </div>
+
+                <div class="two-column">
+                    <div class="form-group">
+                        <label for="server_min">Min. liczba serwerów</label>
+                        <input type="number" id="server_min" name="server_min" min="1" max="20" value="1" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="server_max">Max. liczba serwerów</label>
+                        <input type="number" id="server_max" name="server_max" min="1" max="20" value="10" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEKCJA 4: Parametry algorytmu -->
+            <div class="form-section">
+                <h2>4️⃣ Parametry algorytmu Firefly</h2>
+
+                <div class="two-column">
+                    <div class="form-group">
+                        <label for="n_fireflies">Liczba świetlików (populacja)</label>
+                        <input type="number" id="n_fireflies" name="n_fireflies" min="10" max="100" value="25" required>
+                        <div class="help-text">Więcej = lepsza eksploracja, ale wolniej (rekomendowane: 20-30)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="max_iterations">Liczba iteracji</label>
+                        <input type="number" id="max_iterations" name="max_iterations" min="10" max="500" value="100" required>
+                        <div class="help-text">Więcej = lepsze wyniki, ale dłużej (rekomendowane: 50-150)</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Zaawansowane parametry algorytmu</label>
+                    <div class="two-column">
+                        <div>
+                            <label for="alpha">Alpha (losowość) α</label>
+                            <input type="number" id="alpha" name="alpha" min="0" max="1" step="0.1" value="0.5" required>
+                            <div class="help-text">0-1, rekomendowane: 0.5</div>
+                        </div>
+                        <div>
+                            <label for="beta_0">Beta_0 (atrakcyjność) β₀</label>
+                            <input type="number" id="beta_0" name="beta_0" min="0" max="2" step="0.1" value="1.0" required>
+                            <div class="help-text">0-2, rekomendowane: 1.0</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <label for="gamma">Gamma (absorpcja) γ</label>
+                        <input type="number" id="gamma" name="gamma" min="0" max="5" step="0.1" value="1.0" required>
+                        <div class="help-text">0-5, rekomendowane: 1.0</div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">🚀 Uruchom optymalizację!</button>
+        </form>
+
+        <!-- Loading -->
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Optymalizacja w toku... Proszę czekać.</p>
+            <p style="font-size: 0.9em; color: #999;">Algorytm Firefly przeszukuje przestrzeń rozwiązań...</p>
+        </div>
+
+        <!-- Wyniki -->
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Generowanie formularzy dla stacji
+        function generateStations() {
+            const numStations = parseInt(document.getElementById('num_stations').value);
+            const container = document.getElementById('stationsContainer');
+            container.innerHTML = '';
+
+            for (let i = 0; i < numStations; i++) {
+                const stationDiv = document.createElement('div');
+                stationDiv.className = 'station-config';
+                stationDiv.innerHTML = `
+                    <div class="station-header">Stacja ${i + 1}</div>
+                    <div class="form-group">
+                        <label>Nazwa stacji</label>
+                        <input type="text" name="station_name_${i}" value="Stacja ${i + 1}" required>
+                    </div>
+                    <div class="two-column">
+                        <div class="form-group">
+                            <label>Szybkość obsługi μ (zadania/s)</label>
+                            <input type="number" name="service_rate_${i}" min="0.1" step="0.1" value="${3 + Math.random() * 3}" required>
+                            <div class="help-text">Ile zadań/s może przetworzyć 1 serwer?</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Liczba serwerów (początkowa)</label>
+                            <input type="number" name="num_servers_${i}" min="1" max="20" value="2" required>
+                            <div class="help-text">Początkowa liczba (będzie optymalizowana)</div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(stationDiv);
+            }
+
+            document.getElementById('stationsSection').style.display = 'block';
+        }
+
+        // Obsługa formularza
+        document.getElementById('optimizerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Zbierz dane z formularza
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            // Pokaż loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('submitBtn').disabled = true;
+
+            try {
+                // Wyślij request
+                const response = await fetch('/optimize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(result);
+                } else {
+                    displayError(result.error);
+                }
+            } catch (error) {
+                displayError('Błąd połączenia: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+
+        // Wyświetl wyniki
+        function displayResults(result) {
+            const resultsDiv = document.getElementById('results');
+            const baseline = result.results.baseline;
+            const optimized = result.results.optimized;
+            const improvement = result.results.improvement;
+
+            resultsDiv.innerHTML = `
+                <h2 style="text-align: center; color: #333; margin-bottom: 30px;">📊 Wyniki optymalizacji</h2>
+
+                <div class="improvement-box">
+                    ✨ Poprawa: ${improvement.percent.toFixed(2)}%
+                </div>
+
+                <div class="two-column">
+                    <div class="result-card">
+                        <h3>🔴 PRZED optymalizacją</h3>
+                        <div class="metric-row">
+                            <span class="metric-label">Konfiguracja serwerów:</span>
+                            <span class="metric-value">[${baseline.network.num_servers.join(', ')}]</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Średni czas odpowiedzi:</span>
+                            <span class="metric-value">${baseline.metrics.mean_response_time.toFixed(4)} s</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Średnia długość kolejki:</span>
+                            <span class="metric-value">${baseline.metrics.mean_queue_length.toFixed(2)}</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Przepustowość:</span>
+                            <span class="metric-value">${baseline.metrics.throughput.toFixed(4)} zadań/s</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3>🟢 PO optymalizacji</h3>
+                        <div class="metric-row">
+                            <span class="metric-label">Konfiguracja serwerów:</span>
+                            <span class="metric-value">[${optimized.network.num_servers.join(', ')}]</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Średni czas odpowiedzi:</span>
+                            <span class="metric-value">${optimized.metrics.mean_response_time.toFixed(4)} s</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Średnia długość kolejki:</span>
+                            <span class="metric-value">${optimized.metrics.mean_queue_length.toFixed(2)}</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Przepustowość:</span>
+                            <span class="metric-value">${optimized.metrics.throughput.toFixed(4)} zadań/s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wykresy -->
+                <div class="result-card">
+                    <h3>📈 Wizualizacje</h3>
+
+                    <div class="plot-container">
+                        <div class="plot-title">Konwergencja algorytmu Firefly</div>
+                        <img src="data:image/png;base64,${result.plots.convergence}" alt="Konwergencja">
+                    </div>
+
+                    <div class="plot-container">
+                        <div class="plot-title">Porównanie głównych metryk</div>
+                        <img src="data:image/png;base64,${result.plots.metrics}" alt="Metryki">
+                    </div>
+
+                    <div class="plot-container">
+                        <div class="plot-title">Długości kolejek na stacjach</div>
+                        <img src="data:image/png;base64,${result.plots.queues}" alt="Kolejki">
+                    </div>
+
+                    <div class="plot-container">
+                        <div class="plot-title">Wykorzystanie serwerów</div>
+                        <img src="data:image/png;base64,${result.plots.utilization}" alt="Utilization">
+                    </div>
+                </div>
+            `;
+
+            resultsDiv.style.display = 'block';
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Wyświetl błąd
+        function displayError(error) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <div class="error">
+                    <h3>❌ Wystąpił błąd</h3>
+                    <p>${error}</p>
+                </div>
+            `;
+            resultsDiv.style.display = 'block';
+        }
+
+        // Automatycznie wygeneruj stacje przy załadowaniu
+        window.onload = function() {
+            generateStations();
+        };
+    </script>
+</body>
+</html>
