@@ -108,7 +108,46 @@ class ObjectiveFunctions:
         """
         queue_lengths = metrics['queue_lengths']
         return max(queue_lengths)
+    @staticmethod
+    def response_time_percentile(metrics: Dict[str, Any], percentile: float = 95.0) -> float:
+        """
+        FUNKCJA: Percentyl czasu odpowiedzi (np. 95-percentyl)
 
+        CO TO OZNACZA?
+        ---------------
+        Szukamy takiej wartości R_p, że p % zadań ma czas odpowiedzi
+        mniejszy lub równy R_p.
+
+        FORMUŁA:
+        --------
+        R_95 = percentyl(R, 95)
+
+        CEL:
+        ----
+        Minimalizować tę wartość – ograniczyć długie czasy dla „pechowych” klientów.
+
+        Args:
+            metrics: słownik z metrykami zawierający 'response_times' lub
+                     'response_time_samples'
+            percentile: wartość percentyla (do obliczenia, domyślnie 95)
+
+        Returns:
+            Wartość do minimalizacji (np. 95-percentyl czasu odpowiedzi)
+        """
+       
+        
+        if 'response_time_samples' in metrics:
+            samples = np.array(metrics['response_time_samples'], dtype=float)
+        else:
+            samples = np.array(metrics.get('response_times', []), dtype=float)
+
+        
+        if samples.size == 0:
+            return float('inf')
+
+       
+        value = float(np.percentile(samples, percentile))
+        return value
     @staticmethod
     def utilization_variance(metrics: Dict[str, Any]) -> float:
         """
@@ -315,7 +354,18 @@ OBJECTIVE_CATALOG = {
         'function': ObjectiveFunctions.profit,
         'unit': 'jednostki monetarne',
         'goal': 'maximize'
-    }
+    },
+      'response_time_percentile': {
+        'name': '95-percentyl czasu odpowiedzi',
+        'description': (
+            'Minimalizuj 95-percentyl czasu odpowiedzi – czas, którego 95 % '
+            'zadań nie przekracza. Chroni „pechowych” klientów przed '
+            'bardzo długim oczekiwaniem.'
+        ),
+        'function': ObjectiveFunctions.response_time_percentile,
+        'unit': 'sekundy',
+        'goal': 'minimize'
+    },
 }
 
 

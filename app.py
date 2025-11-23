@@ -128,7 +128,8 @@ def optimize():
                 'baseline': results['baseline'],
                 'optimized': results['optimized'],
                 'improvement': results['improvement'],
-                'optimization_info': results['optimization_info']
+                'optimization_info': results['optimization_info'],
+                'cost': results.get('cost')
             },
             'plots': plots
         }

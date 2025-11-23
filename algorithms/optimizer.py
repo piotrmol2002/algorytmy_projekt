@@ -310,7 +310,24 @@ class QueueingOptimizer:
             print(f"   Średni czas odpowiedzi: {optimized_metrics['mean_response_time']:.4f} s")
             print(f"   Średnia długość kolejki: {optimized_metrics['mean_queue_length']:.2f}")
             print(f"   Przepustowość: {optimized_metrics['throughput']:.4f} zadań/s")
+        # KROK 3.5: Oblicz koszt optymalizacji (liczba dodanych serwerów)
+        baseline_servers = baseline_metrics.get('total_servers', 0)
+        optimized_servers = optimized_metrics.get('total_servers', 0)
+        added_servers = max(0, optimized_servers - baseline_servers)
 
+        # Ten koszt dotyczy naszych funkcji celu:
+        # - mean_queue_length
+        # - max_queue_length
+        # - response_time_percentile
+        cost = None
+        if self.objective_name in ('mean_queue_length', 'max_queue_length', 'response_time_percentile'):
+            cost = {
+                'type': 'added_servers',
+                'description': 'Liczba dodanych serwerów w optymalnym rozwiązaniu',
+                'baseline_servers': int(baseline_servers),
+                'optimized_servers': int(optimized_servers),
+                'added_servers': int(added_servers)
+            }
         # KROK 4: Oblicz poprawę
         improvement_percent = ((baseline_objective - best_value) / baseline_objective) * 100
 
@@ -344,5 +361,6 @@ class QueueingOptimizer:
                 'optimized_variables': self.optimize_vars,
                 'firefly_params': self.firefly_params
             },
+            'cost': cost,
             'history': history
         }

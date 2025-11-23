@@ -43,3 +43,13 @@ Thumbs.db
 # Test files
 test_request.json
 nul
+# === FIRELY PROJECT ADDITIONS ===
+# Reports and data (ZADANIE 2)
+reports/
+*.csv
+
+# Frontend dependencies
+node_modules/
+
+# Environment variables
+.env
