@@ -68,6 +68,19 @@ def optimize():
         server_min = int(data.get('server_min', 1))
         server_max = int(data.get('server_max', 10))
 
+        # Nowe parametry dla rozszerzonej optymalizacji
+        customer_min = int(data.get('customer_min', 1))
+        customer_max = int(data.get('customer_max', 100))
+        mu_min = float(data.get('mu_min', 0.1))
+        mu_max = float(data.get('mu_max', 10.0))
+
+        # Parametry kosztow dla funkcji profit
+        cost_params = {
+            'r': float(data.get('profit_r', 10.0)),
+            'C_s': float(data.get('profit_Cs', 1.0)),
+            'C_N': float(data.get('profit_Cn', 0.5))
+        }
+
         # Parametry Firefly
         n_fireflies = int(data.get('n_fireflies', 25))
         max_iterations = int(data.get('max_iterations', 100))
@@ -90,6 +103,9 @@ def optimize():
             objective=objective,
             optimize_vars=optimize_vars,
             server_bounds=(server_min, server_max),
+            customer_bounds=(customer_min, customer_max),
+            service_rate_bounds=(mu_min, mu_max),
+            cost_params=cost_params,
             firefly_params={
                 'n_fireflies': n_fireflies,
                 'max_iterations': max_iterations,

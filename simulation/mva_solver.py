@@ -170,6 +170,8 @@ class MVASolver:
             'utilizations': utilizations,
             'throughput': float(throughput),
             'total_servers': int(np.sum(m)),
+            'total_service_rate': float(np.sum(mu)),
+            'num_customers': int(N),
             'station_names': self.network.station_names
         }
 

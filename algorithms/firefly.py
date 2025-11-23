@@ -301,7 +301,7 @@ class FireflyAlgorithm:
             print(f"Liczba świetlików: {self.n_fireflies}")
             print(f"Wymiary problemu: {self.n_dimensions}")
             print(f"Maksymalna liczba iteracji: {self.max_iterations}")
-            print(f"Parametry: α={self.alpha}, β₀={self.beta_0}, γ={self.gamma}")
+            print(f"Parametry: alpha={self.alpha}, beta_0={self.beta_0}, gamma={self.gamma}")
             print("=" * 70)
 
         # KROK 1: Inicjalizacja

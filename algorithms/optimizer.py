@@ -56,6 +56,9 @@ class QueueingOptimizer:
         objective: str = 'mean_response_time',
         optimize_vars: List[str] = ['num_servers'],
         server_bounds: Optional[Tuple[int, int]] = (1, 10),
+        customer_bounds: Optional[Tuple[int, int]] = None,
+        service_rate_bounds: Optional[Tuple[float, float]] = None,
+        cost_params: Optional[Dict[str, float]] = None,
         firefly_params: Optional[Dict[str, Any]] = None
     ):
         """
@@ -70,13 +73,20 @@ class QueueingOptimizer:
                       - 'max_queue_length': minimalizuj najdłuższą kolejkę
                       - 'utilization_variance': minimalizuj nierównomierność obciążenia
                       - 'throughput': maksymalizuj przepustowość
+                      - 'profit': maksymalizuj zysk ekonomiczny
             optimize_vars: Lista zmiennych do optymalizacji
                           Opcje:
                           - 'num_servers': liczba serwerów na każdej stacji
                           - 'service_rates': szybkość obsługi
-                          - 'routing': macierz routingu (TODO)
+                          - 'num_customers': liczba klientów w systemie
             server_bounds: Zakres liczby serwerów (min, max)
                           np. (1, 10) = od 1 do 10 serwerów
+            customer_bounds: Zakres liczby klientów (min, max)
+                            np. (1, 100) = od 1 do 100 klientów
+            service_rate_bounds: Zakres szybkości obsługi (min, max)
+                                np. (0.1, 10.0)
+            cost_params: Parametry kosztów dla funkcji profit
+                        {'r': 10.0, 'C_s': 1.0, 'C_N': 0.5}
             firefly_params: Parametry algorytmu Firefly
                            np. {'n_fireflies': 30, 'max_iterations': 150}
         """
@@ -84,6 +94,9 @@ class QueueingOptimizer:
         self.objective_name = objective
         self.optimize_vars = optimize_vars
         self.server_bounds = server_bounds
+        self.customer_bounds = customer_bounds if customer_bounds else (1, 100)
+        self.service_rate_bounds = service_rate_bounds
+        self.cost_params = cost_params if cost_params else {'r': 10.0, 'C_s': 1.0, 'C_N': 0.5}
 
         # Parametry Firefly (domyślne lub podane)
         default_params = {
@@ -124,6 +137,13 @@ class QueueingOptimizer:
 
         idx = 0
 
+        if 'num_customers' in self.optimize_vars:
+            # Optymalizuj liczbę klientów w systemie
+            self.bounds.append(self.customer_bounds)
+            self.integer_vars.append(idx)
+            self.var_map.append(('num_customers', None))
+            idx += 1
+
         if 'num_servers' in self.optimize_vars:
             # Dla każdej stacji dodaj bounds dla liczby serwerów
             for i in range(self.base_network.K):
@@ -135,13 +155,14 @@ class QueueingOptimizer:
         if 'service_rates' in self.optimize_vars:
             # Dla każdej stacji dodaj bounds dla service rate
             for i in range(self.base_network.K):
-                # Zakres: 50%-200% wartości bazowej
-                base_rate = self.base_network.mu[i]
-                self.bounds.append((0.5 * base_rate, 2.0 * base_rate))
+                if self.service_rate_bounds:
+                    self.bounds.append(self.service_rate_bounds)
+                else:
+                    # Zakres: 50%-200% wartości bazowej
+                    base_rate = self.base_network.mu[i]
+                    self.bounds.append((0.5 * base_rate, 2.0 * base_rate))
                 self.var_map.append(('service_rates', i))
                 idx += 1
-
-        # TODO: Dodaj support dla optymalizacji routingu
 
     def _vector_to_network(self, vector: np.ndarray) -> QueueingNetwork:
         """
@@ -165,7 +186,11 @@ class QueueingOptimizer:
         updates = {}
 
         for idx, (var_type, station_idx) in enumerate(self.var_map):
-            if var_type == 'num_servers':
+            if var_type == 'num_customers':
+                # Aktualizuj liczbę klientów bezpośrednio
+                network.N = int(vector[idx])
+
+            elif var_type == 'num_servers':
                 if 'num_servers' not in updates:
                     updates['num_servers'] = network.m.copy()
                 updates['num_servers'][station_idx] = int(vector[idx])
@@ -176,7 +201,8 @@ class QueueingOptimizer:
                 updates['service_rates'][station_idx] = float(vector[idx])
 
         # Zastosuj aktualizacje
-        network.update_parameters(**updates)
+        if updates:
+            network.update_parameters(**updates)
 
         return network
 
@@ -205,7 +231,12 @@ class QueueingOptimizer:
             metrics = solver.solve()
 
             # 3. Oblicz wartość funkcji celu
-            objective_value = self.objective_function_raw(metrics)
+            if self.objective_name == 'profit':
+                # Dla profit przekaż parametry kosztów
+                from models.objective_functions import ObjectiveFunctions
+                objective_value = ObjectiveFunctions.profit(metrics, self.cost_params)
+            else:
+                objective_value = self.objective_function_raw(metrics)
 
             return objective_value
 
@@ -240,7 +271,7 @@ class QueueingOptimizer:
 
         # KROK 1: Oceń sieć PRZED optymalizacją (baseline)
         if verbose:
-            print("\n📊 KROK 1: Analiza sieci PRZED optymalizacją...")
+            print("\n[KROK 1] Analiza sieci PRZED optymalizacja...")
 
         baseline_solver = MVASolver(self.base_network)
         baseline_metrics = baseline_solver.solve()
@@ -254,7 +285,7 @@ class QueueingOptimizer:
 
         # KROK 2: Uruchom algorytm Firefly
         if verbose:
-            print(f"\n🔥 KROK 2: Uruchamiam Firefly Algorithm...")
+            print(f"\n[KROK 2] Uruchamiam Firefly Algorithm...")
 
         firefly = FireflyAlgorithm(
             objective_function=self._objective_wrapper,
@@ -268,7 +299,7 @@ class QueueingOptimizer:
 
         # KROK 3: Oceń najlepsze rozwiązanie
         if verbose:
-            print(f"\n📊 KROK 3: Analiza sieci PO optymalizacji...")
+            print(f"\n[KROK 3] Analiza sieci PO optymalizacji...")
 
         optimized_network = self._vector_to_network(best_vector)
         optimized_solver = MVASolver(optimized_network)
@@ -285,7 +316,7 @@ class QueueingOptimizer:
 
         if verbose:
             print("\n" + "=" * 70)
-            print("✅ OPTYMALIZACJA ZAKOŃCZONA")
+            print("OPTYMALIZACJA ZAKONCZONA")
             print("=" * 70)
             print(f"Poprawa: {improvement_percent:.2f}%")
             print("=" * 70)

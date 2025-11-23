@@ -160,6 +160,55 @@ class ObjectiveFunctions:
         return -metrics['throughput']
 
     @staticmethod
+    def profit(
+        metrics: Dict[str, Any],
+        cost_params: Dict[str, float] = None
+    ) -> float:
+        """
+        FUNKCJA 6: Zysk ekonomiczny (Profit)
+
+        CO TO OZNACZA?
+        --------------
+        Funkcja ekonomiczna uwzględniająca przychody i koszty:
+        - Przychód: r * X (zysk z każdego przetworzonego zadania)
+        - Koszt serwera: C_s * suma(mu) (koszt mocy obliczeniowej)
+        - Koszt zadań: C_N * N (koszt utrzymania zadań w systemie)
+
+        FORMUŁA:
+        --------
+        Profit = r * X - C_s * suma(service_rates) - C_N * N
+
+        UWAGA: Zwracamy UJEMNĄ wartość, bo algorytm minimalizuje,
+               a my chcemy MAKSYMALIZOWAĆ zysk
+
+        CEL: MINIMALIZOWAĆ ujemną wartość = MAKSYMALIZOWAĆ zysk
+
+        Args:
+            metrics: Słownik z metrykami zawierający 'throughput',
+                    'total_service_rate', 'num_customers'
+            cost_params: Słownik z parametrami kosztów:
+                        - 'r': zysk z obsługi jednego zadania
+                        - 'C_s': koszt jednostkowy mocy serwera
+                        - 'C_N': koszt jednego zadania w systemie
+
+        Returns:
+            Wartość do minimalizacji (ujemny zysk)
+        """
+        if cost_params is None:
+            cost_params = {'r': 10.0, 'C_s': 1.0, 'C_N': 0.5}
+
+        r = cost_params.get('r', 10.0)
+        C_s = cost_params.get('C_s', 1.0)
+        C_N = cost_params.get('C_N', 0.5)
+
+        X = metrics['throughput']
+        total_mu = metrics.get('total_service_rate', 0)
+        N = metrics.get('num_customers', 0)
+
+        profit_value = r * X - C_s * total_mu - C_N * N
+        return -profit_value  # Ujemny, bo minimalizujemy
+
+    @staticmethod
     def weighted_multi_objective(
         metrics: Dict[str, Any],
         weights: Dict[str, float]
@@ -258,6 +307,13 @@ OBJECTIVE_CATALOG = {
         'description': 'Maksymalizuj liczbę zadań przetwarzanych na jednostkę czasu',
         'function': ObjectiveFunctions.throughput_negative,
         'unit': 'zadania/s',
+        'goal': 'maximize'
+    },
+    'profit': {
+        'name': 'Zysk ekonomiczny',
+        'description': 'Maksymalizuj zysk: r*X - C_s*mu - C_N*N',
+        'function': ObjectiveFunctions.profit,
+        'unit': 'jednostki monetarne',
         'goal': 'maximize'
     }
 }
