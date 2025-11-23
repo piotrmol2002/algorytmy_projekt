@@ -21,10 +21,10 @@ services:
     networks:
       - firefly-network
 
-  # Frontend Static
+  # Frontend React
   frontend:
     build:
-      context: ./frontend-simple
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: firefly-frontend
     ports:
