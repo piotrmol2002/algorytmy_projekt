@@ -1,0 +1,14 @@
+Parametr,Przed optymalizacja,Po optymalizacji,Zmiana,Zmiana %
+N (liczba uzytkownikow),5,3,-2,
+mu (szybkosc obslugi),0.5000,2.0000,1.5000,
+S (czas obslugi),2.0000,0.5000,-1.5000,
+,,,,
+R (czas odpowiedzi) [s],10.0000,1.5000,-8.5000,-85.00%
+X (przepustowosc) [zad/s],0.5000,2.0000,1.5000,300.00%
+L (dlugosc kolejki),5.0000,3.0000,-2.0000,-40.00%
+,,,,
+Koszt serwera (C_s*mu),5.0000,20.0000,15.0000,
+Koszt zadan (C_N*N),10.0000,6.0000,-4.0000,
+Koszt calkowity,15.0000,26.0000,11.0000,
+Przychod (r*X),25.0000,100.0000,75.0000,
+Zysk netto,10.0000,74.0000,,

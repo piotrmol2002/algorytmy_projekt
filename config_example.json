@@ -1,0 +1,19 @@
+{
+    "Z": 5.0,
+    "N_min": 1,
+    "N_max": 50,
+    "mu_min": 0.1,
+    "mu_max": 10.0,
+
+    "r": 10.0,
+    "C_s": 1.0,
+    "C_N": 0.5,
+
+    "firefly": {
+        "n_fireflies": 25,
+        "n_iterations": 100,
+        "alpha": 0.5,
+        "beta_0": 1.0,
+        "gamma": 1.0
+    }
+}
