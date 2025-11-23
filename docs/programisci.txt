@@ -1,0 +1,150 @@
+Podzial zadan na 3 programistow
+
+PROGRAMISTA 1 - Funkcje celu: mean_response_time + throughput + NOWA
+
+Funkcje celu do opracowania:
+1. mean_response_time - minimalizacja czasu odpowiedzi
+2. throughput - maksymalizacja przepustowosci
+3. NOWA: cost_efficiency - stosunek przepustowosci do kosztu (X / koszt_serwerow)
+
+Zadania programistyczne:
+
+1. Implementacja nowej funkcji celu: cost_efficiency
+   - Formula: X / suma(m_i) gdzie m_i = liczba serwerow na stacji i
+   - Cel: maksymalizacja (jak najwiecej przepustowosci na serwer)
+2. Dodanie kosztu optymalizacji do UI dla swoich funkcji:
+   - Dla response_time: koszt = liczba dodanych serwerow
+   - Dla throughput: koszt = liczba dodanych serwerow
+   - Dla cost_efficiency: koszt = liczba dodanych serwerow
+   - Pokazac w podsumowaniu: inwestycja vs zysk (poprawa charakterystyk)
+3. Wykres porownawczy dla swoich funkcji celu:
+   - Wykres slupkowy: R przed vs R po (dla response_time)
+   - Wykres slupkowy: X przed vs X po (dla throughput)
+   - Wykres: efektywnosc kosztowa przed vs po
+4. Wzory matematyczne w UI:
+   - Dla kazdej ze swoich 3 funkcji dodac wzor matematyczny z legenda
+   - Wyswietlac przy wyborze funkcji celu lub w osobnej sekcji
+5. Weryfikacja i organizacja struktury projektu
+   - Przejrzec strukture katalogow i upewnic sie ze jest logiczna
+   - Usunac zbedne/nieuzywane pliki (np. stary closed_system_optimizer.py)
+   - Sprawdzic czy wszystkie importy dzialaja poprawnie
+   - Zaktualizowac README jesli struktura sie zmienila
+
+---
+PROGRAMISTA 2 - Funkcje celu: mean_queue_length + max_queue_length + NOWA
+
+Funkcje celu do opracowania:
+1. mean_queue_length - minimalizacja sredniej dlugosci kolejki
+2. max_queue_length - minimalizacja maksymalnej kolejki
+3. NOWA: response_time_percentile - minimalizacja 95-percentyla czasu odpowiedzi
+
+Zadania programistyczne:
+
+1. Implementacja nowej funkcji celu: response_time_percentile
+   - Formula: percentyl(R, 95) - czas odpowiedzi dla 95% najszybszych zadan
+   - Cel: minimalizacja (unikanie dlugich czasow dla "pechowych" klientow)
+2. Aktualizacja .gitignore:
+   - Dodac m.in.: reports/, *.csv, node_modules/, .env
+3. Dodanie kosztu optymalizacji do UI dla swoich funkcji:
+   - Dla mean_queue_length: koszt = liczba dodanych serwerow
+   - Dla max_queue_length: koszt = liczba dodanych serwerow
+   - Dla response_time_percentile: koszt = liczba dodanych serwerow
+   - Pokazac w podsumowaniu: inwestycja vs zysk
+4. Wykres porownawczy dla swoich funkcji celu:
+   - Wykres slupkowy: L przed vs L po
+   - Wykres kolejek per stacja
+   - Wykres percentyli czasow odpowiedzi
+5. Wzory matematyczne w UI:
+   - Dla kazdej ze swoich 3 funkcji dodac wzor matematyczny z legenda
+   - Wyswietlac przy wyborze funkcji celu lub w osobnej sekcji
+
+---
+PROGRAMISTA 3 - Funkcje celu: utilization_variance + profit + NOWA
+
+Funkcje celu do opracowania:
+1. utilization_variance - rownomiernosc obciazenia
+2. profit - zysk ekonomiczny (r*X - C_s*mu - C_N*N)
+3. NOWA: weighted_objective - wazona suma wielu metryk
+
+Zadania programistyczne:
+
+1. Implementacja nowej funkcji celu: weighted_objective
+   - Formula: w1*(-R) + w2*X + w3*(-L) gdzie w1,w2,w3 to wagi
+   - Cel: maksymalizacja (kompromis miedzy roznymi celami)
+   - Dodac pola w UI do konfiguracji wag
+2. Dodanie parametrow kosztow do UI (dla profit):
+   - Pola: r, C_s, C_N
+   - Pokazywac tylko gdy wybrana funkcja = profit
+3. Testy i debug calosci:
+   - Przetestowac wszystkie 9 funkcji celu (6 starych + 3 nowe)
+   - Sprawdzic edge cases
+   - Raport z bledow
+4. Dodanie kosztu optymalizacji do UI dla swoich funkcji:
+   - Dla utilization_variance: koszt = liczba dodanych serwerow
+   - Dla profit: koszt = delta(C_s*mu) + delta(C_N*N)
+   - Dla weighted_objective: koszt = liczba dodanych serwerow
+   - Pokazac w podsumowaniu: inwestycja vs zysk
+5. Wykres porownawczy dla swoich funkcji celu:
+   - Wykres wykorzystania serwerow (bar chart)
+   - Wykres zysku: przychod vs koszt vs zysk netto
+   - Wykres radar/pajak dla weighted_objective
+6. Wzory matematyczne w UI:
+   - Dla kazdej ze swoich 3 funkcji dodac wzor matematyczny z legenda
+   - Wyswietlac przy wyborze funkcji celu lub w osobnej sekcji
+
+---
+Podsumowanie zadan
+
+| Zadanie                                       | P1  | P2  | P3  |
+|-----------------------------------------------|-----|-----|-----|
+| Nowa funkcja celu                             |  +  |  +  |  +  |
+| Koszt optymalizacji w UI                      |  +  |  +  |  +  |
+| Wzory matematyczne w UI                       |  +  |  +  |  +  |
+| Wykres dla swoich f. celu                     |  +  |  +  |  +  |
+| Gitignore                                     |     |  +  |     |
+| Parametry kosztow UI (profit)                 |     |     |  +  |
+| Testy calosci                                 |     |     |  +  |
+| Weryfikacja i organizacja struktury projektu  |  +  |     |     |
+
+---
+NOWE FUNKCJE CELU - SPECYFIKACJA
+
+1. cost_efficiency (P1)
+   - Formula: f = X / suma(m_i)
+   - Gdzie: X = przepustowosc, m_i = liczba serwerow na stacji i
+   - Cel: maksymalizacja
+   - Interpretacja: ile zadan/s na jeden serwer
+
+2. response_time_percentile (P2)
+   - Formula: f = -percentyl(R, 95)
+   - Gdzie: R = wektor czasow odpowiedzi per stacja
+   - Cel: maksymalizacja (minimalizacja percentyla)
+   - Interpretacja: 95% zadan ma czas odpowiedzi ponizej tej wartosci
+
+3. weighted_objective (P3)
+   - Formula: f = w1*(-R_avg) + w2*X + w3*(-L_avg)
+   - Gdzie: w1,w2,w3 = wagi (konfigurowalne w UI)
+   - Cel: maksymalizacja
+   - Interpretacja: kompromis miedzy czasem, przepustowoscia i kolejkami
+
+---
+WZORY MATEMATYCZNE - FORMAT W UI
+
+Kazda funkcja celu musi miec w UI:
+1. Nazwe funkcji
+2. Wzor matematyczny (moze byc LaTeX lub prosty tekst)
+3. Legende symboli:
+   - R = sredni czas odpowiedzi [s]
+   - X = przepustowosc [zadania/s]
+   - L = srednia dlugosc kolejki
+   - N = liczba klientow w systemie
+   - mu = szybkosc obslugi [zadania/s]
+   - m = liczba serwerow
+   - r = zysk z obslugi zadania
+   - C_s = koszt jednostkowy serwera
+   - C_N = koszt klienta w systemie
+
+Przyklad dla profit:
+  Wzor: Profit = r * X - C_s * sum(mu_i) - C_N * N
+  Legenda: r=zysk/zadanie, X=przepustowosc, C_s=koszt serwera,
+           mu_i=szybkosc stacji i, C_N=koszt klienta, N=liczba klientow
