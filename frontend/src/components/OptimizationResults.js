@@ -32,6 +32,7 @@ function OptimizationResults({ results }) {
   const baseline = results.results.baseline;
   const optimized = results.results.optimized;
   const improvement = results.results.improvement;
+  const cost = results.results.cost;
   const plots = results.plots;
 
   // Dane dla wykresu konwergencji (jeśli dostępne)
@@ -187,7 +188,37 @@ function OptimizationResults({ results }) {
                 </div>
               </div>
             </div>
+            {/* Inwestycja vs zysk (dla funkcji z kosztem) */}
+            {cost && (
+              <div className="investment-card">
+                <h3>💰 Inwestycja vs zysk</h3>
 
+                <div className="metric-row">
+                  <span>Serwery przed:</span>
+                  <strong>{cost.baseline_servers}</strong>
+                </div>
+
+                <div className="metric-row">
+                  <span>Serwery po:</span>
+                  <strong>{cost.optimized_servers}</strong>
+                </div>
+
+                <div className="metric-row">
+                  <span>Dodane serwery (inwestycja):</span>
+                  <strong>{cost.added_servers}</strong>
+                </div>
+
+                <div className="metric-row">
+                  <span>Poprawa funkcji celu (zysk):</span>
+                  <strong>{improvement.absolute.toFixed(4)}</strong>
+                </div>
+
+                <div className="metric-row">
+                  <span>Poprawa [%]:</span>
+                  <strong>{improvement.percent.toFixed(2)}%</strong>
+                </div>
+              </div>
+            )}
             {/* Szczegóły stacji */}
             <div className="stations-details">
               <h3>📊 Szczegóły stacji</h3>
@@ -286,6 +317,15 @@ function OptimizationResults({ results }) {
                   <h3>📊 Szczegółowe porównanie</h3>
                   <img src={`data:image/png;base64,${plots.metrics}`} alt="Metryki" />
                 </div>
+                 {plots.response_time_percentiles && (
+                  <div className="chart-container">
+                    <h3>⏱ Percentyle czasów odpowiedzi</h3>
+                    <img
+                      src={`data:image/png;base64,${plots.response_time_percentiles}`}
+                      alt="Percentyle czasów odpowiedzi"
+                    />
+                  </div>
+                )}
               </>
             )}
           </div>

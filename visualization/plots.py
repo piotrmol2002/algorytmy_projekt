@@ -241,7 +241,80 @@ def plot_utilization_comparison(baseline: Dict[str, Any], optimized: Dict[str, A
 
     return img_base64
 
+def plot_response_time_percentiles(baseline: Dict[str, Any], optimized: Dict[str, Any]) -> str:
+    """
+    Wykres percentyli czasów odpowiedzi (np. 50%, 90%, 95%, 99%) przed i po optymalizacji.
 
+    Wykorzystuje:
+    - metrics['response_time_samples'] jeśli istnieje (dokładne próbki),
+    - w przeciwnym razie metrics['response_times'] (średnie czasy per stacja – przybliżenie).
+
+    Args:
+        baseline: Metryki przed optymalizacją
+        optimized: Metryki po optymalizacji
+
+    Returns:
+        Base64 encoded string z obrazem (lub pusty string, jeśli brak danych)
+    """
+    baseline_metrics = baseline['metrics']
+    optimized_metrics = optimized['metrics']
+
+    # Pobierz próbki / czasy odpowiedzi
+    if 'response_time_samples' in baseline_metrics:
+        R_before = np.array(baseline_metrics['response_time_samples'], dtype=float)
+    else:
+        R_before = np.array(baseline_metrics.get('response_times', []), dtype=float)
+
+    if 'response_time_samples' in optimized_metrics:
+        R_after = np.array(optimized_metrics['response_time_samples'], dtype=float)
+    else:
+        R_after = np.array(optimized_metrics.get('response_times', []), dtype=float)
+
+    # Jeśli nie mamy danych → nie rysujemy
+    if R_before.size == 0 or R_after.size == 0:
+        return ""
+
+    percentiles = [50, 90, 95, 99]
+    labels = [f"{p}%" for p in percentiles]
+
+    values_before = [np.percentile(R_before, p) for p in percentiles]
+    values_after = [np.percentile(R_after, p) for p in percentiles]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    x = np.arange(len(percentiles))
+    width = 0.35
+
+    bars1 = ax.bar(x - width/2, values_before, width,
+                   label='Przed optymalizacją', color='#ff6b6b', alpha=0.8, edgecolor='black')
+    bars2 = ax.bar(x + width/2, values_after, width,
+                   label='Po optymalizacji', color='#51cf66', alpha=0.8, edgecolor='black')
+
+    ax.set_xlabel('Percentyl', fontsize=12)
+    ax.set_ylabel('Czas odpowiedzi [s]', fontsize=12)
+    ax.set_title('Percentyle czasów odpowiedzi', fontsize=14, fontweight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend(fontsize=10)
+    ax.grid(axis='y', alpha=0.3)
+
+    # Dodaj wartości na słupkach
+    for bars in (bars1, bars2):
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                    f'{height:.3f}',
+                    ha='center', va='bottom', fontsize=9)
+
+    plt.tight_layout()
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=100)
+    plt.close(fig)
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+
+    return img_base64
 def generate_all_plots(results: Dict[str, Any]) -> Dict[str, str]:
     """
     Generuje wszystkie wykresy naraz.
@@ -275,5 +348,12 @@ def generate_all_plots(results: Dict[str, Any]) -> Dict[str, str]:
         results['baseline'],
         results['optimized']
     )
+     # Wykres percentyli czasów odpowiedzi
+    resp_percentiles_img = plot_response_time_percentiles(
+        results['baseline'],
+        results['optimized']
+    )
+    if resp_percentiles_img:
+        plots['response_time_percentiles'] = resp_percentiles_img
 
     return plots

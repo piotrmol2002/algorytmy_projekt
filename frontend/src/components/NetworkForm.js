@@ -1,5 +1,48 @@
 import React, { useState } from 'react';
 
+// 📐 Wzory matematyczne dla wybranych funkcji celu
+const OBJECTIVE_FORMULAS = {
+  mean_queue_length: {
+    title: 'Średnia długość kolejki',
+    formula: (
+      <>
+        L̄ = Σ<sub>i=1</sub><sup>K</sup> L<sub>i</sub>
+      </>
+    ),
+    legend: [
+      'K – liczba stacji w systemie',
+      'Lᵢ – średnia długość kolejki na stacji i',
+      'L̄ – łączna średnia długość kolejki w systemie (suma po stacjach)'
+    ]
+  },
+  max_queue_length: {
+    title: 'Maksymalna długość kolejki',
+    formula: (
+      <>
+        L<sub>max</sub> = max<sub>1 ≤ i ≤ K</sub> L<sub>i</sub>
+      </>
+    ),
+    legend: [
+      'Lᵢ – średnia długość kolejki na stacji i',
+      'Lₘₐₓ – najdłuższa kolejka w całym systemie',
+      'K – liczba stacji'
+    ]
+  },
+  response_time_percentile: {
+    title: '95-percentyl czasu odpowiedzi',
+    formula: (
+      <>
+        R<sub>95</sub> = percentyl<sub>95</sub>(R)
+      </>
+    ),
+    legend: [
+      'R – czas odpowiedzi pojedynczego zadania',
+      'R₉₅ – 95-percentyl czasu odpowiedzi',
+      '95 % zadań ma czas odpowiedzi ≤ R₉₅'
+    ]
+  }
+};
+
 function NetworkForm({ objectives, onSubmit }) {
   const [numStations, setNumStations] = useState(3);
   const [numCustomers, setNumCustomers] = useState(20);
@@ -23,18 +66,15 @@ function NetworkForm({ objectives, onSubmit }) {
     const newNum = parseInt(value);
     setNumStations(newNum);
 
-    // Dostosuj tablicę stacji
     const newStations = [];
     for (let i = 0; i < newNum; i++) {
-      if (i < stations.length) {
-        newStations.push(stations[i]);
-      } else {
+      if (i < stations.length) newStations.push(stations[i]);
+      else
         newStations.push({
           name: `Stacja ${i + 1}`,
           serviceRate: 3.0 + Math.random() * 3,
           numServers: 2
         });
-      }
     }
     setStations(newStations.slice(0, newNum));
   };
@@ -55,7 +95,6 @@ function NetworkForm({ objectives, onSubmit }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Przygotuj dane do wysłania
     const formData = {
       num_stations: numStations,
       num_customers: numCustomers,
@@ -66,7 +105,6 @@ function NetworkForm({ objectives, onSubmit }) {
       ...fireflyParams
     };
 
-    // Dodaj dane stacji
     stations.forEach((station, i) => {
       formData[`station_name_${i}`] = station.name;
       formData[`service_rate_${i}`] = station.serviceRate;
@@ -78,7 +116,7 @@ function NetworkForm({ objectives, onSubmit }) {
 
   return (
     <form className="network-form" onSubmit={handleSubmit}>
-      {/* Sekcja 1: Podstawowe parametry */}
+      {/* === 1. Definicja sieci kolejkowej === */}
       <div className="form-section">
         <h2>1. Definicja sieci kolejkowej</h2>
 
@@ -113,7 +151,7 @@ function NetworkForm({ objectives, onSubmit }) {
         </div>
       </div>
 
-      {/* Sekcja 2: Konfiguracja stacji */}
+      {/* === 2. Konfiguracja stacji === */}
       <div className="form-section">
         <h2>2. Konfiguracja stacji</h2>
 
@@ -161,7 +199,7 @@ function NetworkForm({ objectives, onSubmit }) {
         </div>
       </div>
 
-      {/* Sekcja 3: Funkcja celu */}
+      {/* === 3. Funkcja celu === */}
       <div className="form-section">
         <h2>3. Funkcja celu</h2>
 
@@ -173,13 +211,31 @@ function NetworkForm({ objectives, onSubmit }) {
             onChange={(e) => setSelectedObjective(e.target.value)}
             required
           >
-            {objectives.map(obj => (
+            {objectives.map((obj) => (
               <option key={obj.id} value={obj.id}>
-                {obj.name} - {obj.description}
+                {obj.name} – {obj.description}
               </option>
             ))}
           </select>
         </div>
+
+        {/* 📐 Sekcja ze wzorem funkcji celu */}
+        {OBJECTIVE_FORMULAS[selectedObjective] && (
+          <div className="objective-math-card">
+            <h3>📐 Wzór funkcji celu</h3>
+            <p className="objective-math-title">
+              {OBJECTIVE_FORMULAS[selectedObjective].title}
+            </p>
+            <p className="objective-math-formula">
+              {OBJECTIVE_FORMULAS[selectedObjective].formula}
+            </p>
+            <ul className="objective-math-legend">
+              {OBJECTIVE_FORMULAS[selectedObjective].legend.map((item, idx) => (
+                <li key={idx}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="form-grid">
           <div className="form-group">
@@ -210,7 +266,7 @@ function NetworkForm({ objectives, onSubmit }) {
         </div>
       </div>
 
-      {/* Sekcja 4: Parametry Firefly */}
+      {/* === 4. Parametry Firefly === */}
       <div className="form-section">
         <h2>4. Parametry algorytmu Firefly</h2>
 
