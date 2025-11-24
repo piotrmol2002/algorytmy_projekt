@@ -393,6 +393,13 @@ OBJECTIVE_CATALOG = {
         'unit': 'sekundy',
         'goal': 'minimize'
     },
+    'generic_weighted_objective': {
+        'name': 'Generyczna funkcja ważona',
+        'description': 'Minimalizuj ważoną sumę wielu kryteriów (np. 0.7*R + 0.3*Var)',
+        'function': ObjectiveFunctions.weighted_multi_objective,
+        'unit': 'bezwymiarowe',
+        'goal': 'minimize'
+    },
     'weighted_objective': {
         'name': 'Kompromisowa wielokryterialna',
         'description': 'Wazony kompromis: w1*(-R) + w2*X + w3*(-L)',

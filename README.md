@@ -113,12 +113,20 @@ Firefly/
 
 ## Funkcje celu
 
-- `mean_response_time` - minimalizacja czasu odpowiedzi
-- `mean_queue_length` - minimalizacja dlugosci kolejki
-- `max_queue_length` - minimalizacja maksymalnej kolejki
-- `utilization_variance` - rownomierne obciazenie serwerow
-- `throughput` - maksymalizacja przepustowosci
-- `profit` - maksymalizacja zysku (r*X - C_s*mu - C_N*N)
+Aplikacja oferuje 9 różnych funkcji celu, które można wybrać do optymalizacji. Każda z nich koncentruje się na innym aspekcie wydajności systemu.
+
+| Nazwa funkcji celu | Cel | Opis |
+| :--- | :--- | :--- |
+| **Średni czas odpowiedzi** | MINIMALIZACJA | Minimalizuje średni czas, jaki zadanie spędza w całym systemie (oczekiwanie + obsługa). |
+| **Średnia długość kolejki** | MINIMALIZACJA | Minimalizuje średnią liczbę zadań oczekujących w kolejkach we wszystkich stacjach. |
+| **Maksymalna długość kolejki**| MINIMALIZACJA | Skupia się na redukcji najdłuższej kolejki w systemie, co pomaga eliminować "wąskie gardła". |
+| **Równomierność obciążenia** | MINIMALIZACJA | Dąży do równego rozłożenia pracy na wszystkie serwery poprzez minimalizację wariancji ich wykorzystania. |
+| **95-percentyl czasu odpowiedzi**| MINIMALIZACJA | Minimalizuje czas, którego 95% zadań nie przekracza. Chroni to przed skrajnie długimi czasami oczekiwania. |
+| **Przepustowość systemu** | MAKSYMALIZACJA | Maksymalizuje liczbę zadań, które system jest w stanie przetworzyć w jednostce czasu. |
+| **Zysk ekonomiczny** | MAKSYMALIZACJA | Maksymalizuje zysk obliczony na podstawie przychodów, kosztów obsługi i kosztów utrzymania zadań w systemie. |
+| **Kompromisowa wielokryterialna**| MAKSYMALIZACJA | Umożliwia jednoczesną optymalizację czasu odpowiedzi, przepustowości i długości kolejki (`w1*(-R) + w2*X + w3*(-L)`). |
+| **Generyczna funkcja ważona** | MINIMALIZACJA | Pozwala na zdefiniowanie własnej, ważonej kombinacji wielu kryteriów (np. czasu odpowiedzi, wariancji obciążenia). |
+
 
 ## Troubleshooting
 

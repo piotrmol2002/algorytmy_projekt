@@ -1,89 +1,138 @@
 import React, { useState } from 'react';
 
-// 📐 Wzory matematyczne dla wybranych funkcji celu
+// Wzory matematyczne dla wybranych funkcji celu
 const OBJECTIVE_FORMULAS = {
+  mean_response_time: {
+    title: 'Średni czas odpowiedzi',
+    formula: (
+      <>
+        R = W + S = L/X + 1/μ
+      </>
+    ),
+    legend: [
+      'R - średni czas odpowiedzi (czas w systemie)',
+      'W - średni czas oczekiwania w kolejce',
+      'S - średni czas obsługi',
+      'L - średnia długość kolejki',
+      'X - przepustowość systemu',
+      'μ - szybkość obsługi',
+      'Cel: minimalizacja (krótszy czas = lepiej)'
+    ]
+  },
   mean_queue_length: {
     title: 'Średnia długość kolejki',
     formula: (
       <>
-        L̄ = Σ<sub>i=1</sub><sup>K</sup> L<sub>i</sub>
+        L = λ * W
       </>
     ),
     legend: [
-      'K – liczba stacji w systemie',
-      'Lᵢ – średnia długość kolejki na stacji i',
-      'L̄ – łączna średnia długość kolejki w systemie (suma po stacjach)'
+      'L – średnia liczba klientów w kolejce',
+      'λ – średnia intensywność napływu zgłoszeń',
+      'W – średni czas oczekiwania w kolejce',
+      'Cel: minimalizacja → krótsze kolejki'
     ]
   },
   max_queue_length: {
     title: 'Maksymalna długość kolejki',
     formula: (
       <>
-        L<sub>max</sub> = max<sub>1 ≤ i ≤ K</sub> L<sub>i</sub>
+        L<sub>max</sub> = max(L₁, L₂, ..., Lₖ)
       </>
     ),
     legend: [
-      'Lᵢ – średnia długość kolejki na stacji i',
-      'Lₘₐₓ – najdłuższa kolejka w całym systemie',
-      'K – liczba stacji'
-    ]
-  },
-  response_time_percentile: {
-    title: '95-percentyl czasu odpowiedzi',
-    formula: (
-      <>
-        R<sub>95</sub> = percentyl<sub>95</sub>(R)
-      </>
-    ),
-    legend: [
-      'R – czas odpowiedzi pojedynczego zadania',
-      'R₉₅ – 95-percentyl czasu odpowiedzi',
-      '95 % zadań ma czas odpowiedzi ≤ R₉₅'
+      'Lₖ – średnia długość kolejki na stacji k',
+      'Cel: minimalizacja → unikanie wąskich gardeł'
     ]
   },
   utilization_variance: {
     title: 'Równomierność obciążenia (Wariancja wykorzystania)',
     formula: (
       <>
-        σ²(ρ) = Var(ρ<sub>1</sub>, ρ<sub>2</sub>, ..., ρ<sub>K</sub>)
+        σ²(ρ) = Var(ρ₁, ρ₂, ..., ρₖ)
       </>
     ),
     legend: [
-      'ρᵢ – wykorzystanie serwera na stacji i (wartość 0-1)',
-      'σ²(ρ) – wariancja wykorzystania',
+      'ρᵢ - wykorzystanie serwera na stacji i (wartość 0-1)',
+      'σ²(ρ) - wariancja wykorzystania',
       'Cel: minimalizacja → równomierne obciążenie wszystkich serwerów'
+    ]
+  },
+  throughput: {
+    title: 'Przepustowość systemu',
+    formula: (
+      <>
+        X = N / R
+      </>
+    ),
+    legend: [
+      'X - przepustowość (throughput) [zadania/s]',
+      'N - liczba klientów w systemie',
+      'R - średni czas odpowiedzi',
+      'Cel: maksymalizacja (większa przepustowość = lepiej)'
     ]
   },
   profit: {
     title: 'Zysk ekonomiczny',
     formula: (
       <>
-        Profit = r · X - C<sub>s</sub> · Σμ<sub>i</sub> - C<sub>N</sub> · N
+        Profit = r·X - Cₛ·∑μᵢ - Cₙ·N
       </>
     ),
     legend: [
-      'r – zysk z obsługi jednego zadania',
-      'X – przepustowość systemu [zadania/s]',
-      'Cₛ – koszt jednostkowy mocy serwera',
-      'μᵢ – szybkość obsługi stacji i',
-      'Cₙ – koszt utrzymania klienta w systemie',
-      'N – liczba klientów w systemie',
-      'Cel: maksymalizacja zysku'
+      'r – przychód z jednego zadania',
+      'X – przepustowość systemu',
+      'Cₛ – koszt jednostkowy mocy obliczeniowej',
+      'μᵢ – szybkość obsługi na stacji i',
+      'Cₙ – koszt utrzymania zadania w systemie',
+      'N – średnia liczba zadań w systemie',
+      'Cel: maksymalizacja'
+    ]
+  },
+  response_time_percentile: {
+    title: 'Percentyl czasu odpowiedzi (np. 95-ty)',
+    formula: (
+      <>
+        Rₚ = Percentile(R, p)
+      </>
+    ),
+    legend: [
+      'Rₚ - p-ty percentyl czasu odpowiedzi',
+      'R - zbiór czasów odpowiedzi',
+      'p - próg percentyla (np. 95)',
+      'Cel: minimalizacja → ograniczenie skrajnie długich czasów'
+    ]
+  },
+  generic_weighted_objective: {
+    title: 'Generyczna funkcja ważona',
+    formula: (
+      <>
+        f = w₁·R + w₂·L + w₃·σ²(ρ) + ...
+      </>
+    ),
+    legend: [
+        'f - wartość funkcji celu',
+        'wᵢ - waga dla i-tego kryterium',
+        'R - średni czas odpowiedzi',
+        'L - średnia długość kolejki',
+        'σ²(ρ) - wariancja wykorzystania',
+        'Cel: minimalizacja (wymaga zdefiniowania wag)'
     ]
   },
   weighted_objective: {
     title: 'Kompromisowa wielokryterialna',
     formula: (
       <>
-        f = w<sub>1</sub>·(-R) + w<sub>2</sub>·X + w<sub>3</sub>·(-L)
+        f = w₁(-R) + w₂X + w₃(-L)
       </>
     ),
     legend: [
-      'R – średni czas odpowiedzi [s]',
-      'X – przepustowość [zadania/s]',
-      'L – średnia długość kolejki',
-      'w₁, w₂, w₃ – wagi (konfigurowalne przez użytkownika)',
-      'Cel: maksymalizacja (kompromis między trzema metrykami)'
+      'f – wartość funkcji celu',
+      'w₁, w₂, w₃ – wagi dla kryteriów',
+      'R – średni czas odpowiedzi (minimalizacja)',
+      'X – przepustowość (maksymalizacja)',
+      'L – średnia długość kolejki (minimalizacja)',
+      'Cel: maksymalizacja'
     ]
   }
 };
