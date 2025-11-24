@@ -438,7 +438,10 @@ function NetworkForm({ objectives, onSubmit }) {
 
         <div className="form-grid">
           <div className="form-group">
-            <label htmlFor="n_fireflies">Liczba świetlików</label>
+            <label htmlFor="n_fireflies" title="Liczba agentow przeszukujacych przestrzen rozwiazan. Kazdy swietlik reprezentuje jedno potencjalne rozwiazanie. Wieksza liczba = lepsze pokrycie przestrzeni, ale dluzszy czas obliczen.">
+              Liczba swietlikow
+              <span className="tooltip-icon" title="Liczba agentow przeszukujacych przestrzen rozwiazan. Kazdy swietlik reprezentuje jedno potencjalne rozwiazanie. Wieksza liczba = lepsze pokrycie przestrzeni, ale dluzszy czas obliczen.">?</span>
+            </label>
             <input
               type="number"
               id="n_fireflies"
@@ -448,11 +451,14 @@ function NetworkForm({ objectives, onSubmit }) {
               max="100"
               required
             />
-            <small>Więcej = lepsza eksploracja</small>
+            <small>Wiecej = lepsza eksploracja (10-100)</small>
           </div>
 
           <div className="form-group">
-            <label htmlFor="max_iterations">Liczba iteracji</label>
+            <label htmlFor="max_iterations" title="Liczba cykli optymalizacji. W kazdej iteracji swietliki poruszaja sie w kierunku lepszych rozwiazan. Wiecej iteracji = lepsze wyniki, ale dluzszy czas.">
+              Liczba iteracji
+              <span className="tooltip-icon" title="Liczba cykli optymalizacji. W kazdej iteracji swietliki poruszaja sie w kierunku lepszych rozwiazan. Wiecej iteracji = lepsze wyniki, ale dluzszy czas.">?</span>
+            </label>
             <input
               type="number"
               id="max_iterations"
@@ -462,7 +468,7 @@ function NetworkForm({ objectives, onSubmit }) {
               max="500"
               required
             />
-            <small>Więcej = lepsze wyniki</small>
+            <small>Wiecej = lepsze wyniki (10-500)</small>
           </div>
         </div>
 
@@ -471,7 +477,10 @@ function NetworkForm({ objectives, onSubmit }) {
 
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="alpha">Alpha (α)</label>
+              <label htmlFor="alpha" title="Wspolczynnik losowosci ruchu. Kontroluje eksploracje vs eksploatacje. Alpha=0: tylko ruch do lepszych, Alpha=1: duzo losowosci. Typowo: 0.2-0.5">
+                Alpha (α)
+                <span className="tooltip-icon" title="Wspolczynnik losowosci ruchu. Kontroluje eksploracje vs eksploatacje. Alpha=0: tylko ruch do lepszych rozwiazan, Alpha=1: duzo losowego przeszukiwania. Typowo: 0.2-0.5">?</span>
+              </label>
               <input
                 type="number"
                 id="alpha"
@@ -481,11 +490,14 @@ function NetworkForm({ objectives, onSubmit }) {
                 max="1"
                 step="0.1"
               />
-              <small>Losowość (0-1)</small>
+              <small>Losowosc ruchu (0=brak, 1=max)</small>
             </div>
 
             <div className="form-group">
-              <label htmlFor="beta_0">Beta₀ (β₀)</label>
+              <label htmlFor="beta_0" title="Bazowa atrakcyjnosc swietlika przy zerowej odleglosci. Okreslajak silnie swietliki przyciagaja sie nawzajem. Wyzsze wartosci = silniejsze przyciaganie do lepszych rozwiazan.">
+                Beta0 (β0)
+                <span className="tooltip-icon" title="Bazowa atrakcyjnosc swietlika przy zerowej odleglosci. Okresla jak silnie swietliki przyciagaja sie nawzajem. Wyzsze wartosci = silniejsze przyciaganie do lepszych rozwiazan. Typowo: 0.5-2.0">?</span>
+              </label>
               <input
                 type="number"
                 id="beta_0"
@@ -495,11 +507,14 @@ function NetworkForm({ objectives, onSubmit }) {
                 max="2"
                 step="0.1"
               />
-              <small>Atrakcyjność bazowa</small>
+              <small>Sila przyciagania (0.5-2.0)</small>
             </div>
 
             <div className="form-group">
-              <label htmlFor="gamma">Gamma (γ)</label>
+              <label htmlFor="gamma" title="Wspolczynnik absorpcji swiatla. Okresla jak szybko atrakcyjnosc maleje z odlegloscia. Gamma=0: atrakcyjnosc stala, Gamma wysoka: tylko bliskie swietliki przyciagaja.">
+                Gamma (γ)
+                <span className="tooltip-icon" title="Wspolczynnik absorpcji swiatla. Okresla jak szybko atrakcyjnosc maleje z odlegloscia. Gamma=0: atrakcyjnosc stala niezaleznie od odleglosci, Gamma wysoka: tylko bliskie swietliki sie przyciagaja. Typowo: 0.1-2.0">?</span>
+              </label>
               <input
                 type="number"
                 id="gamma"
@@ -509,7 +524,7 @@ function NetworkForm({ objectives, onSubmit }) {
                 max="5"
                 step="0.1"
               />
-              <small>Absorpcja światła</small>
+              <small>Spadek atrakcyjnosci z odlegloscia</small>
             </div>
           </div>
         </details>

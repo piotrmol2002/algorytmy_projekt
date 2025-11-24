@@ -36,7 +36,10 @@ function App() {
     setResults(null);
 
     try {
-      const response = await axios.post('/optimize', formData);
+      // Timeout 10 minut dla dlugich optymalizacji (100 swietlikow * 200 iteracji moze trwac dlugo)
+      const response = await axios.post('/optimize', formData, {
+        timeout: 600000 // 10 minut
+      });
 
       if (response.data.success) {
         setResults(response.data);

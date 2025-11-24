@@ -179,6 +179,105 @@
   font-style: italic;
 }
 
+/* ===== TOOLTIPS ===== */
+.tooltip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  background: #667eea;
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: help;
+  vertical-align: middle;
+}
+
+.tooltip-icon:hover {
+  background: #764ba2;
+}
+
+/* ===== OBJECTIVE MATH CARD ===== */
+.objective-math-card {
+  background: white;
+  border: 2px solid #667eea;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.objective-math-card h3 {
+  color: #667eea;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.objective-math-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.objective-math-formula {
+  background: #f8f9ff;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-family: 'Cambria Math', 'Times New Roman', serif;
+  font-size: 1.3rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  border: 1px solid #e0e0e0;
+  letter-spacing: 1px;
+}
+
+.objective-math-legend {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.objective-math-legend li {
+  padding: 0.5rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  font-size: 0.9rem;
+  color: #555;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.objective-math-legend li:last-child {
+  border-bottom: none;
+}
+
+.objective-math-legend li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #667eea;
+  font-weight: bold;
+}
+
+/* ===== COST/WEIGHT PARAMS SECTIONS ===== */
+.cost-params-section,
+.weight-params-section {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+
+.cost-params-section h3,
+.weight-params-section h3 {
+  color: #667eea;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
 /* ===== STATIONS ===== */
 .stations-list {
   display: grid;

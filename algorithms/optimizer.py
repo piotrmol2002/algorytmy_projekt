@@ -333,8 +333,20 @@ class QueueingOptimizer:
         added_servers = max(0, optimized_servers - baseline_servers)
 
         # Oblicz improvement_percent
+        # Dla funkcji celu ktore maksymalizuja (profit, throughput, weighted_objective)
+        # zwracamy ujemna wartosc do minimalizacji, wiec poprawa = -baseline + best
+        # Dla funkcji ktore minimalizuja, poprawa = baseline - best
         if abs(baseline_objective) > 0:
-            improvement_percent = ((baseline_objective - best_value) / abs(baseline_objective)) * 100
+            # Sprawdz czy to funkcja maksymalizujaca (zwraca ujemna wartosc)
+            if self.objective_name in ('profit', 'throughput', 'weighted_objective'):
+                # Dla tych funkcji: mniejsza (bardziej ujemna) wartosc = lepsza
+                # Rzeczywista poprawa to: -best_value vs -baseline_objective
+                real_baseline = -baseline_objective
+                real_best = -best_value
+                improvement_percent = ((real_best - real_baseline) / abs(real_baseline)) * 100 if real_baseline != 0 else 0.0
+            else:
+                # Dla funkcji minimalizujacych (czas, dlugosc kolejki)
+                improvement_percent = ((baseline_objective - best_value) / abs(baseline_objective)) * 100
         else:
             improvement_percent = 0.0
 
@@ -343,13 +355,21 @@ class QueueingOptimizer:
         # Dla funkcji wykorzystujących dodane serwery
         if self.objective_name in ('mean_queue_length', 'max_queue_length', 'response_time_percentile',
                                      'utilization_variance', 'weighted_objective', 'mean_response_time', 'throughput'):
+            # Oblicz wartosc poprawy odpowiednio do typu funkcji
+            if self.objective_name in ('throughput', 'weighted_objective'):
+                # Dla funkcji maksymalizujacych - rzeczywista poprawa
+                improvement_value = float(-best_value - (-baseline_objective))
+            else:
+                # Dla funkcji minimalizujacych
+                improvement_value = float(baseline_objective - best_value)
+
             cost = {
                 'type': 'added_servers',
-                'description': 'Liczba dodanych serwerów (inwestycja)',
+                'description': 'Liczba dodanych serwerow (inwestycja)',
                 'baseline_servers': int(baseline_servers),
                 'optimized_servers': int(optimized_servers),
                 'added_servers': int(added_servers),
-                'improvement_value': float(baseline_objective - best_value),
+                'improvement_value': improvement_value,
                 'improvement_percent': float(improvement_percent)
             }
 
@@ -430,7 +450,7 @@ class QueueingOptimizer:
                 'solution_vector': best_vector.tolist()
             },
             'improvement': {
-                'absolute': baseline_objective - best_value,
+                'absolute': float(-best_value - (-baseline_objective)) if self.objective_name in ('profit', 'throughput', 'weighted_objective') else float(baseline_objective - best_value),
                 'percent': improvement_percent
             },
             'optimization_info': {
