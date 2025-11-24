@@ -188,10 +188,13 @@ function OptimizationResults({ results }) {
                 </div>
               </div>
             </div>
-            {/* Inwestycja vs zysk (dla funkcji z kosztem) */}
-            {cost && (
+            {/* Inwestycja vs zysk */}
+            {cost && cost.type === 'added_servers' && (
               <div className="investment-card">
-                <h3>💰 Inwestycja vs zysk</h3>
+                <h3>Analiza kosztow optymalizacji</h3>
+                <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
+                  {cost.description}
+                </p>
 
                 <div className="metric-row">
                   <span>Serwery przed:</span>
@@ -205,17 +208,95 @@ function OptimizationResults({ results }) {
 
                 <div className="metric-row">
                   <span>Dodane serwery (inwestycja):</span>
+                  <strong style={{color: '#ff6b6b'}}>{cost.added_servers}</strong>
+                </div>
+
+                <div className="metric-row">
+                  <span>Poprawa funkcji celu:</span>
+                  <strong style={{color: '#51cf66'}}>{cost.improvement_value.toFixed(4)}</strong>
+                </div>
+
+                <div className="metric-row">
+                  <span>Poprawa procentowa:</span>
+                  <strong style={{color: '#51cf66'}}>{cost.improvement_percent.toFixed(2)}%</strong>
+                </div>
+
+                <div style={{marginTop: '15px', padding: '10px', background: '#e7f5ff', borderRadius: '5px'}}>
+                  <strong>Wniosek:</strong> Dodanie {cost.added_servers} serwer(ow)
+                  poprawilo wydajnosc o {cost.improvement_percent.toFixed(2)}%
+                </div>
+              </div>
+            )}
+
+            {/* Szczegolowy breakdown dla profit */}
+            {cost && cost.type === 'profit_breakdown' && (
+              <div className="investment-card">
+                <h3>Analiza ekonomiczna (Profit)</h3>
+                <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
+                  {cost.description}
+                </p>
+
+                <h4 style={{marginTop: '20px', marginBottom: '10px'}}>Przed optymalizacja:</h4>
+                <div className="metric-row">
+                  <span>Przychod (r*X):</span>
+                  <strong style={{color: '#51cf66'}}>{cost.baseline.revenue.toFixed(2)}</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Koszt serwerow (Cs*sum_mu):</span>
+                  <strong style={{color: '#ff6b6b'}}>-{cost.baseline.cost_servers.toFixed(2)}</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Koszt klientow (Cn*N):</span>
+                  <strong style={{color: '#ff6b6b'}}>-{cost.baseline.cost_customers.toFixed(2)}</strong>
+                </div>
+                <div className="metric-row" style={{borderTop: '2px solid #ddd', paddingTop: '8px', marginTop: '8px'}}>
+                  <span><strong>= Zysk netto:</strong></span>
+                  <strong style={{color: cost.baseline.profit >= 0 ? '#51cf66' : '#ff6b6b', fontSize: '1.1em'}}>
+                    {cost.baseline.profit.toFixed(2)}
+                  </strong>
+                </div>
+
+                <h4 style={{marginTop: '20px', marginBottom: '10px'}}>Po optymalizacji:</h4>
+                <div className="metric-row">
+                  <span>Przychod (r*X):</span>
+                  <strong style={{color: '#51cf66'}}>{cost.optimized.revenue.toFixed(2)}</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Koszt serwerow (Cs*sum_mu):</span>
+                  <strong style={{color: '#ff6b6b'}}>-{cost.optimized.cost_servers.toFixed(2)}</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Koszt klientow (Cn*N):</span>
+                  <strong style={{color: '#ff6b6b'}}>-{cost.optimized.cost_customers.toFixed(2)}</strong>
+                </div>
+                <div className="metric-row" style={{borderTop: '2px solid #ddd', paddingTop: '8px', marginTop: '8px'}}>
+                  <span><strong>= Zysk netto:</strong></span>
+                  <strong style={{color: cost.optimized.profit >= 0 ? '#51cf66' : '#ff6b6b', fontSize: '1.1em'}}>
+                    {cost.optimized.profit.toFixed(2)}
+                  </strong>
+                </div>
+
+                <h4 style={{marginTop: '20px', marginBottom: '10px'}}>Wynik inwestycji:</h4>
+                <div className="metric-row">
+                  <span>Dodatkowy koszt (inwestycja):</span>
+                  <strong style={{color: '#ff6b6b'}}>{cost.delta.investment.toFixed(2)}</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Przyrost zysku:</span>
+                  <strong style={{color: '#51cf66'}}>+{cost.delta.profit_gain.toFixed(2)}</strong>
+                </div>
+                <div className="metric-row">
+                  <span>ROI (Return on Investment):</span>
+                  <strong style={{color: '#4c6ef5', fontSize: '1.1em'}}>{cost.delta.roi_percent.toFixed(1)}%</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Dodane serwery:</span>
                   <strong>{cost.added_servers}</strong>
                 </div>
 
-                <div className="metric-row">
-                  <span>Poprawa funkcji celu (zysk):</span>
-                  <strong>{improvement.absolute.toFixed(4)}</strong>
-                </div>
-
-                <div className="metric-row">
-                  <span>Poprawa [%]:</span>
-                  <strong>{improvement.percent.toFixed(2)}%</strong>
+                <div style={{marginTop: '15px', padding: '10px', background: '#e7f5ff', borderRadius: '5px'}}>
+                  <strong>Wniosek:</strong> Inwestycja {cost.delta.investment.toFixed(2)} jednostek
+                  zwiekszyla zysk o {cost.delta.profit_gain.toFixed(2)} (ROI: {cost.delta.roi_percent.toFixed(1)}%)
                 </div>
               </div>
             )}

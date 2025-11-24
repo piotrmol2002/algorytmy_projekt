@@ -307,6 +307,33 @@ class ObjectiveFunctions:
 
         return objective
 
+    @staticmethod
+    def weighted_objective(
+        metrics: Dict[str, Any],
+        weights: Dict[str, float] = None
+    ) -> float:
+        """
+        FUNKCJA: Wazona suma wielu metryk
+
+        FORMULA: f = w1*(-R) + w2*X + w3*(-L)
+
+        CEL: MAKSYMALIZACJA
+        """
+        if weights is None:
+            weights = {'w1': 0.33, 'w2': 0.34, 'w3': 0.33}
+
+        w1 = weights.get('w1', 0.33)
+        w2 = weights.get('w2', 0.34)
+        w3 = weights.get('w3', 0.33)
+
+        R = metrics['mean_response_time']
+        X = metrics['throughput']
+        L = metrics['mean_queue_length']
+
+        value = w1 * (-R) + w2 * X + w3 * (-L)
+        return -value
+
+
 
 # =============================================================================
 # KATALOG DOSTĘPNYCH FUNKCJI CELU (dla UI)
@@ -366,6 +393,13 @@ OBJECTIVE_CATALOG = {
         'unit': 'sekundy',
         'goal': 'minimize'
     },
+    'weighted_objective': {
+        'name': 'Kompromisowa wielokryterialna',
+        'description': 'Wazony kompromis: w1*(-R) + w2*X + w3*(-L)',
+        'function': ObjectiveFunctions.weighted_objective,
+        'unit': 'bezwymiarowe',
+        'goal': 'maximize'
+    }
 }
 
 

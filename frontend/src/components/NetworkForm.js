@@ -40,6 +40,51 @@ const OBJECTIVE_FORMULAS = {
       'R₉₅ – 95-percentyl czasu odpowiedzi',
       '95 % zadań ma czas odpowiedzi ≤ R₉₅'
     ]
+  },
+  utilization_variance: {
+    title: 'Równomierność obciążenia (Wariancja wykorzystania)',
+    formula: (
+      <>
+        σ²(ρ) = Var(ρ<sub>1</sub>, ρ<sub>2</sub>, ..., ρ<sub>K</sub>)
+      </>
+    ),
+    legend: [
+      'ρᵢ – wykorzystanie serwera na stacji i (wartość 0-1)',
+      'σ²(ρ) – wariancja wykorzystania',
+      'Cel: minimalizacja → równomierne obciążenie wszystkich serwerów'
+    ]
+  },
+  profit: {
+    title: 'Zysk ekonomiczny',
+    formula: (
+      <>
+        Profit = r · X - C<sub>s</sub> · Σμ<sub>i</sub> - C<sub>N</sub> · N
+      </>
+    ),
+    legend: [
+      'r – zysk z obsługi jednego zadania',
+      'X – przepustowość systemu [zadania/s]',
+      'Cₛ – koszt jednostkowy mocy serwera',
+      'μᵢ – szybkość obsługi stacji i',
+      'Cₙ – koszt utrzymania klienta w systemie',
+      'N – liczba klientów w systemie',
+      'Cel: maksymalizacja zysku'
+    ]
+  },
+  weighted_objective: {
+    title: 'Kompromisowa wielokryterialna',
+    formula: (
+      <>
+        f = w<sub>1</sub>·(-R) + w<sub>2</sub>·X + w<sub>3</sub>·(-L)
+      </>
+    ),
+    legend: [
+      'R – średni czas odpowiedzi [s]',
+      'X – przepustowość [zadania/s]',
+      'L – średnia długość kolejki',
+      'w₁, w₂, w₃ – wagi (konfigurowalne przez użytkownika)',
+      'Cel: maksymalizacja (kompromis między trzema metrykami)'
+    ]
   }
 };
 
@@ -60,6 +105,18 @@ function NetworkForm({ objectives, onSubmit }) {
     alpha: 0.5,
     beta_0: 1.0,
     gamma: 1.0
+  });
+
+  const [costParams, setCostParams] = useState({
+    profit_r: 10.0,
+    profit_Cs: 1.0,
+    profit_Cn: 0.5
+  });
+
+  const [weightParams, setWeightParams] = useState({
+    weight_w1: 0.33,
+    weight_w2: 0.34,
+    weight_w3: 0.33
   });
 
   const handleNumStationsChange = (value) => {
@@ -96,6 +153,12 @@ function NetworkForm({ objectives, onSubmit }) {
     e.preventDefault();
 
     const formData = {
+      profit_r: costParams.profit_r,
+      profit_Cs: costParams.profit_Cs,
+      profit_Cn: costParams.profit_Cn,
+      weight_w1: weightParams.weight_w1,
+      weight_w2: weightParams.weight_w2,
+      weight_w3: weightParams.weight_w3,
       num_stations: numStations,
       num_customers: numCustomers,
       objective: selectedObjective,
@@ -264,6 +327,109 @@ function NetworkForm({ objectives, onSubmit }) {
             />
           </div>
         </div>
+
+        {/* Parametry kosztów dla funkcji "profit" */}
+        {selectedObjective === 'profit' && (
+          <div className="cost-params-section">
+            <h3>Parametry kosztów</h3>
+            <div className="form-grid">
+              <div className="form-group">
+                <label htmlFor="profit_r">r (zysk z zadania)</label>
+                <input
+                  type="number"
+                  id="profit_r"
+                  step="0.1"
+                  value={costParams.profit_r}
+                  onChange={(e) => setCostParams({...costParams, profit_r: parseFloat(e.target.value)})}
+                  min="0"
+                />
+                <small>Przychód z każdego przetworzonego zadania</small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="profit_Cs">C_s (koszt serwera)</label>
+                <input
+                  type="number"
+                  id="profit_Cs"
+                  step="0.1"
+                  value={costParams.profit_Cs}
+                  onChange={(e) => setCostParams({...costParams, profit_Cs: parseFloat(e.target.value)})}
+                  min="0"
+                />
+                <small>Koszt jednostkowy mocy serwera</small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="profit_Cn">C_N (koszt klienta)</label>
+                <input
+                  type="number"
+                  id="profit_Cn"
+                  step="0.1"
+                  value={costParams.profit_Cn}
+                  onChange={(e) => setCostParams({...costParams, profit_Cn: parseFloat(e.target.value)})}
+                  min="0"
+                />
+                <small>Koszt utrzymania klienta w systemie</small>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Parametry wag dla funkcji "weighted_objective" */}
+        {selectedObjective === 'weighted_objective' && (
+          <div className="weight-params-section">
+            <h3>Wagi funkcji wielokryterialnej</h3>
+            <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
+              Formula: f = w1*(-R) + w2*X + w3*(-L)
+            </p>
+            <div className="form-grid">
+              <div className="form-group">
+                <label htmlFor="weight_w1">w1 (waga czasu odpowiedzi)</label>
+                <input
+                  type="number"
+                  id="weight_w1"
+                  step="0.01"
+                  value={weightParams.weight_w1}
+                  onChange={(e) => setWeightParams({...weightParams, weight_w1: parseFloat(e.target.value)})}
+                  min="0"
+                  max="1"
+                />
+                <small>Im wieksze w1, tym wiekszy wplyw czasu odpowiedzi</small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="weight_w2">w2 (waga przepustowosci)</label>
+                <input
+                  type="number"
+                  id="weight_w2"
+                  step="0.01"
+                  value={weightParams.weight_w2}
+                  onChange={(e) => setWeightParams({...weightParams, weight_w2: parseFloat(e.target.value)})}
+                  min="0"
+                  max="1"
+                />
+                <small>Im wieksze w2, tym wiekszy wplyw przepustowosci</small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="weight_w3">w3 (waga dlugosci kolejki)</label>
+                <input
+                  type="number"
+                  id="weight_w3"
+                  step="0.01"
+                  value={weightParams.weight_w3}
+                  onChange={(e) => setWeightParams({...weightParams, weight_w3: parseFloat(e.target.value)})}
+                  min="0"
+                  max="1"
+                />
+                <small>Im wieksze w3, tym wiekszy wplyw dlugosci kolejki</small>
+              </div>
+            </div>
+            <p style={{fontSize: '0.85em', color: '#888', marginTop: '10px'}}>
+              Sugerowane: w1 + w2 + w3 = 1.0
+            </p>
+          </div>
+        )}
       </div>
 
       {/* === 4. Parametry Firefly === */}

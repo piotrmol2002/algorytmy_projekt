@@ -81,6 +81,14 @@ def optimize():
             'C_N': float(data.get('profit_Cn', 0.5))
         }
 
+        # Parametry wag dla weighted_objective
+        weights_params = {
+            'w1': float(data.get('weight_w1', 0.33)),
+            'w2': float(data.get('weight_w2', 0.34)),
+            'w3': float(data.get('weight_w3', 0.33))
+        }
+
+
         # Parametry Firefly
         n_fireflies = int(data.get('n_fireflies', 25))
         max_iterations = int(data.get('max_iterations', 100))
@@ -106,6 +114,7 @@ def optimize():
             customer_bounds=(customer_min, customer_max),
             service_rate_bounds=(mu_min, mu_max),
             cost_params=cost_params,
+            weights_params=weights_params,
             firefly_params={
                 'n_fireflies': n_fireflies,
                 'max_iterations': max_iterations,

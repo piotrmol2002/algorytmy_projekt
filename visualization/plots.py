@@ -315,6 +315,171 @@ def plot_response_time_percentiles(baseline: Dict[str, Any], optimized: Dict[str
     img_base64 = base64.b64encode(buf.read()).decode('utf-8')
 
     return img_base64
+
+
+def plot_profit_breakdown(results: Dict[str, Any]) -> str:
+    """
+    Wykres breakdown zysku ekonomicznego (dla funkcji profit).
+    Pokazuje: przychod, koszty, zysk netto - przed i po optymalizacji.
+
+    Args:
+        results: Pelne wyniki optymalizacji z kosztem typu 'profit_breakdown'
+
+    Returns:
+        Base64 encoded string z obrazem (lub pusty jesli nie ma danych)
+    """
+    cost = results.get('cost')
+    if not cost or cost.get('type') != 'profit_breakdown':
+        return ""
+
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    categories = ['Przychod\n(r*X)', 'Koszt\nserwerow\n(Cs*sum_mu)', 'Koszt\nklientow\n(Cn*N)', 'Zysk\nnetto']
+
+    before_values = [
+        cost['baseline']['revenue'],
+        -cost['baseline']['cost_servers'],
+        -cost['baseline']['cost_customers'],
+        cost['baseline']['profit']
+    ]
+
+    after_values = [
+        cost['optimized']['revenue'],
+        -cost['optimized']['cost_servers'],
+        -cost['optimized']['cost_customers'],
+        cost['optimized']['profit']
+    ]
+
+    x = np.arange(len(categories))
+    width = 0.35
+
+    bars1 = ax.bar(x - width/2, before_values, width,
+                   label='Przed optymalizacja', color='#ff6b6b', alpha=0.8, edgecolor='black')
+    bars2 = ax.bar(x + width/2, after_values, width,
+                   label='Po optymalizacji', color='#51cf66', alpha=0.8, edgecolor='black')
+
+    ax.set_ylabel('Wartosc', fontsize=12)
+    ax.set_title('Analiza ekonomiczna (Profit Breakdown)', fontsize=14, fontweight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels(categories, fontsize=10)
+    ax.legend(fontsize=10)
+    ax.axhline(y=0, color='black', linestyle='-', linewidth=0.8)
+    ax.grid(axis='y', alpha=0.3)
+
+    # Dodaj wartosci na slupkach
+    for bars in [bars1, bars2]:
+        for bar in bars:
+            height = bar.get_height()
+            label_y = height + (0.5 if height >= 0 else -0.5)
+            ax.text(bar.get_x() + bar.get_width()/2., label_y,
+                   f'{height:.2f}',
+                   ha='center', va='bottom' if height >= 0 else 'top',
+                   fontsize=9, fontweight='bold')
+
+    # Dodaj ROI w narozniku
+    roi = cost['delta']['roi_percent']
+    investment = cost['delta']['investment']
+    gain = cost['delta']['profit_gain']
+
+    info_text = f"Inwestycja: {investment:.2f}\nZysk: {gain:.2f}\nROI: {roi:.1f}%"
+    ax.text(0.98, 0.97, info_text, transform=ax.transAxes,
+           fontsize=10, verticalalignment='top', horizontalalignment='right',
+           bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+
+    plt.tight_layout()
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=100)
+    plt.close(fig)
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+
+    return img_base64
+
+
+def plot_weighted_radar(baseline: Dict[str, Any], optimized: Dict[str, Any]) -> str:
+    """
+    Wykres radarowy (pajak) dla funkcji weighted_objective.
+    Porownuje znormalizowane metryki przed i po optymalizacji.
+
+    Args:
+        baseline: Metryki przed optymalizacja
+        optimized: Metryki po optymalizacji
+
+    Returns:
+        Base64 encoded string z obrazem
+    """
+    baseline_metrics = baseline['metrics']
+    optimized_metrics = optimized['metrics']
+
+    # Kategorie do porownania
+    categories = ['Czas\nodpowiedzi', 'Przepustowosc', 'Dlugosc\nkolejki', 'Wykorzystanie']
+
+    # Normalizuj metryki (im wyzszy tym lepiej, 0-1)
+    # Czas odpowiedzi - mniejszy = lepszy
+    R_before = baseline_metrics['mean_response_time']
+    R_after = optimized_metrics['mean_response_time']
+    R_max = max(R_before, R_after)
+    R_normalized_before = 1 - (R_before / R_max) if R_max > 0 else 0.5
+    R_normalized_after = 1 - (R_after / R_max) if R_max > 0 else 0.5
+
+    # Przepustowosc - wieksza = lepsza
+    X_before = baseline_metrics['throughput']
+    X_after = optimized_metrics['throughput']
+    X_max = max(X_before, X_after)
+    X_normalized_before = X_before / X_max if X_max > 0 else 0.5
+    X_normalized_after = X_after / X_max if X_max > 0 else 0.5
+
+    # Dlugosc kolejki - mniejsza = lepsza
+    L_before = baseline_metrics['mean_queue_length']
+    L_after = optimized_metrics['mean_queue_length']
+    L_max = max(L_before, L_after)
+    L_normalized_before = 1 - (L_before / L_max) if L_max > 0 else 0.5
+    L_normalized_after = 1 - (L_after / L_max) if L_max > 0 else 0.5
+
+    # Wykorzystanie - srednie
+    U_before = np.mean(baseline_metrics['utilizations'])
+    U_after = np.mean(optimized_metrics['utilizations'])
+
+    values_before = [R_normalized_before, X_normalized_before, L_normalized_before, U_before]
+    values_after = [R_normalized_after, X_normalized_after, L_normalized_after, U_after]
+
+    # Zamknij wykres (dodaj pierwszy element na koncu)
+    values_before += values_before[:1]
+    values_after += values_after[:1]
+
+    # Katy dla kazdej kategorii
+    angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
+    angles += angles[:1]
+
+    # Stworz wykres
+    fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(projection='polar'))
+
+    ax.plot(angles, values_before, 'o-', linewidth=2, label='Przed', color='#ff6b6b')
+    ax.fill(angles, values_before, alpha=0.25, color='#ff6b6b')
+
+    ax.plot(angles, values_after, 'o-', linewidth=2, label='Po', color='#51cf66')
+    ax.fill(angles, values_after, alpha=0.25, color='#51cf66')
+
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(categories, fontsize=11)
+    ax.set_ylim(0, 1)
+    ax.set_title('Porownanie metryk (Wykres radarowy)\nFunkcja: weighted_objective',
+                 y=1.08, fontsize=13, fontweight='bold')
+    ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1), fontsize=10)
+    ax.grid(True)
+
+    plt.tight_layout()
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+    plt.close(fig)
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+
+    return img_base64
+
+
 def generate_all_plots(results: Dict[str, Any]) -> Dict[str, str]:
     """
     Generuje wszystkie wykresy naraz.
@@ -348,12 +513,25 @@ def generate_all_plots(results: Dict[str, Any]) -> Dict[str, str]:
         results['baseline'],
         results['optimized']
     )
-     # Wykres percentyli czasów odpowiedzi
+
+    # Wykres percentyli czasow odpowiedzi
     resp_percentiles_img = plot_response_time_percentiles(
         results['baseline'],
         results['optimized']
     )
     if resp_percentiles_img:
         plots['response_time_percentiles'] = resp_percentiles_img
+
+    # Wykres breakdown zysku (dla profit)
+    profit_img = plot_profit_breakdown(results)
+    if profit_img:
+        plots['profit_breakdown'] = profit_img
+
+    # Wykres radarowy (dla weighted_objective)
+    objective_name = results.get('optimization_info', {}).get('objective_name', '')
+    if objective_name == 'weighted_objective':
+        radar_img = plot_weighted_radar(results['baseline'], results['optimized'])
+        if radar_img:
+            plots['weighted_radar'] = radar_img
 
     return plots
