@@ -60,6 +60,7 @@ class QueueingOptimizer:
         service_rate_bounds: Optional[Tuple[float, float]] = None,
         cost_params: Optional[Dict[str, float]] = None,
         weights_params: Optional[Dict[str, float]] = None,
+        multi_objective_weights: Optional[Dict[str, float]] = None,
         firefly_params: Optional[Dict[str, Any]] = None
     ):
         """
@@ -102,6 +103,7 @@ class QueueingOptimizer:
         self.service_rate_bounds = service_rate_bounds
         self.cost_params = cost_params if cost_params else {'r': 10.0, 'C_s': 1.0, 'C_N': 0.5}
         self.weights_params = weights_params if weights_params else {'w1': 0.33, 'w2': 0.34, 'w3': 0.33}
+        self.multi_objective_weights = multi_objective_weights if multi_objective_weights else {}
 
         # Parametry Firefly (domyślne lub podane)
         default_params = {
@@ -244,6 +246,9 @@ class QueueingOptimizer:
                 # Dla weighted_objective przekaż wagi
                 from models.objective_functions import ObjectiveFunctions
                 objective_value = ObjectiveFunctions.weighted_objective(metrics, self.weights_params)
+            elif self.objective_name == 'generic_weighted_objective': # new case
+                from models.objective_functions import ObjectiveFunctions
+                objective_value = ObjectiveFunctions.weighted_multi_objective(metrics, self.multi_objective_weights)
             else:
                 objective_value = self.objective_function_raw(metrics)
 
@@ -290,6 +295,9 @@ class QueueingOptimizer:
         elif self.objective_name == 'weighted_objective':
             from models.objective_functions import ObjectiveFunctions
             baseline_objective = ObjectiveFunctions.weighted_objective(baseline_metrics, self.weights_params)
+        elif self.objective_name == 'generic_weighted_objective':
+            from models.objective_functions import ObjectiveFunctions
+            baseline_objective = ObjectiveFunctions.weighted_multi_objective(baseline_metrics, self.multi_objective_weights)
         else:
             baseline_objective = self.objective_function_raw(baseline_metrics)
 

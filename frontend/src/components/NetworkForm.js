@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Wzory matematyczne dla wybranych funkcji celu
 const OBJECTIVE_FORMULAS = {
@@ -137,6 +137,14 @@ const OBJECTIVE_FORMULAS = {
   }
 };
 
+const WEIGHT_CRITERIA = {
+  response_time: 'Średni czas odpowiedzi',
+  queue_length: 'Średnia długość kolejki',
+  utilization_variance: 'Wariancja wykorzystania',
+  max_queue: 'Maksymalna długość kolejki',
+  cost: 'Koszt (liczba serwerów)'
+};
+
 function NetworkForm({ objectives, onSubmit }) {
   const [numStations, setNumStations] = useState(3);
   const [numCustomers, setNumCustomers] = useState(20);
@@ -167,6 +175,40 @@ function NetworkForm({ objectives, onSubmit }) {
     weight_w2: 0.34,
     weight_w3: 0.33
   });
+
+  const [weights, setWeights] = useState({
+    response_time: 0.5,
+    queue_length: 0.5,
+    utilization_variance: 0.0,
+    max_queue: 0.0,
+    cost: 0.0
+  });
+
+  const [totalWeight, setTotalWeight] = useState(1.0);
+  const [weightError, setWeightError] = useState(false);
+
+  useEffect(() => {
+    const sum = Object.values(weights).reduce((acc, w) => acc + w, 0);
+    setTotalWeight(sum);
+    setWeightError(Math.abs(sum - 1.0) > 1e-9);
+  }, [weights]);
+
+  const handleWeightChange = (criterion, value) => {
+    setWeights(prev => ({
+      ...prev,
+      [criterion]: parseFloat(value) || 0
+    }));
+  };
+
+  const handleAutoAdjustWeights = () => {
+    if (totalWeight === 0) return;
+    const adjusted = {};
+    for (const key in weights) {
+      adjusted[key] = weights[key] / totalWeight;
+    }
+    setWeights(adjusted);
+  };
+
 
   const handleNumStationsChange = (value) => {
     const newNum = parseInt(value);
@@ -208,6 +250,7 @@ function NetworkForm({ objectives, onSubmit }) {
       weight_w1: weightParams.weight_w1,
       weight_w2: weightParams.weight_w2,
       weight_w3: weightParams.weight_w3,
+      weights: weights,
       num_stations: numStations,
       num_customers: numCustomers,
       objective: selectedObjective,
@@ -477,6 +520,46 @@ function NetworkForm({ objectives, onSubmit }) {
             <p style={{fontSize: '0.85em', color: '#888', marginTop: '10px'}}>
               Sugerowane: w1 + w2 + w3 = 1.0
             </p>
+          </div>
+        )}
+
+        {/* Parametry wag dla funkcji "generic_weighted_objective" */}
+        {selectedObjective === 'generic_weighted_objective' && (
+          <div className="weight-params-section">
+            <h3>Ustawienia wag dla kryteriów</h3>
+            <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
+              Zdefiniuj, jak ważne jest dla Ciebie każde z kryteriów. Suma wszystkich wag musi wynosić 1.0.
+            </p>
+            <div className="form-grid">
+              {Object.entries(WEIGHT_CRITERIA).map(([key, name]) => (
+                <div className="form-group" key={key}>
+                  <label htmlFor={`weight_${key}`}>{name}</label>
+                  <input
+                    type="number"
+                    id={`weight_${key}`}
+                    step="0.01"
+                    min="0"
+                    max="1"
+                    value={weights[key]}
+                    onChange={(e) => handleWeightChange(key, e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="weight-validation">
+              {weightError ? (
+                <div className="weight-validation-error">
+                  <strong>⚠️ Suma wag ({totalWeight.toFixed(2)}) nie wynosi 1.0.</strong> Różnica: {(totalWeight - 1.0).toFixed(2)}.
+                  <button type="button" onClick={handleAutoAdjustWeights} className="btn-secondary" style={{marginLeft: '15px'}} disabled={totalWeight === 0}>
+                    Auto-dopasuj
+                  </button>
+                </div>
+              ) : (
+                <div className="weight-validation-ok">
+                  <strong>✅ Suma wag wynosi {totalWeight.toFixed(2)}.</strong>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

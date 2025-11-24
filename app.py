@@ -87,6 +87,7 @@ def optimize():
             'w2': float(data.get('weight_w2', 0.34)),
             'w3': float(data.get('weight_w3', 0.33))
         }
+        weights = data.get('weights', {})
 
 
         # Parametry Firefly
@@ -115,6 +116,7 @@ def optimize():
             service_rate_bounds=(mu_min, mu_max),
             cost_params=cost_params,
             weights_params=weights_params,
+            multi_objective_weights=weights,
             firefly_params={
                 'n_fireflies': n_fireflies,
                 'max_iterations': max_iterations,
