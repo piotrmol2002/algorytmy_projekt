@@ -17,12 +17,6 @@
    - Dodać UI dla tej funkcji
    - Dodać wykresy porównawcze
 
-2. **Dodanie obliczeń P₀ i P do WSZYSTKICH 9 funkcji celu:**
-   - P₀ = prawdopodobieństwo, że system jest pusty
-   - P = prawdopodobieństwo odrzucenia zgłoszenia
-   - Implementacja w `mva_solver.py` - dodać do zwracanych metryk
-   - Upewnić się, że są obliczane przy każdej optymalizacji/funkcji celu
-
 3. **Dodanie średniej ilości zgłoszeń oczekujących w kolejce:**
    - Dla każdej funkcji celu obliczać Lq (queue length bez obsługiwanych)
    - Dodać do metryk w `mva_solver.py`
@@ -82,8 +76,6 @@
 ### Dok 2: Patryk Filipak
 
 1. **Aktualizacja legendy symboli - dodać:**
-   - P₀ - prawdopodobieństwo, że system jest pusty
-   - P - prawdopodobieństwo odrzucenia zgłoszenia
    - Lq - średnia ilość zgłoszeń oczekujących w kolejce
    - A - bezwzględna zdolność obsługi systemu
    - W - średni czas przebywania zgłoszeń w systemie
@@ -138,7 +130,7 @@
      - Wzory MVA (sredni czas przebvywania zgloszen w styustemie oraz sredni czas przebywania zgloszen w kolejce)
      - Dziesiątą funkcję celu (2.4)
      - Wzory algorytmu Firefly (dodać nowy podpunkt w punkcie 2)
-     - Wzory metryk (P₀, P, Lq, A, W, Wq, etc.) (pod legendą symboli (2.5) lub dodac w tabeli 4-tą kolumnę)
+     - Wzory metryk (Lq, A, W, Wq, etc.) (pod legendą symboli (2.5) lub dodac w tabeli 4-tą kolumnę)
 
 ---
 
@@ -154,7 +146,7 @@
 
 3. **Dodanie wniosków końcowych (punkt 6)**
    - Uwzględnić wszystkie 10 funkcji celu
-   - Uwzględnić dotychczasowe i nowe metryki (P₀, P, Lq, A, W, Wq itp.)
+   - Uwzględnić dotychczasowe i nowe metryki (Lq, A, W, Wq itp.)
    - Podsumować wyniki badań parametrów Firefly (wnioski)
 
 ---
