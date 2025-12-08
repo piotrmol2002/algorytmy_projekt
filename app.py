@@ -81,6 +81,12 @@ def optimize():
             'C_N': float(data.get('profit_Cn', 0.5))
         }
 
+        # Parametry dla funkcji kosztu Erlang (wzór 4-208)
+        erlang_cost_params = {
+            'c1': float(data.get('erlang_c1', 1.0)),
+            'c2': float(data.get('erlang_c2', 1.0))
+        }
+
         # Parametry wag dla weighted_objective
         weights_params = {
             'w1': float(data.get('weight_w1', 0.33)),
@@ -88,7 +94,6 @@ def optimize():
             'w3': float(data.get('weight_w3', 0.33))
         }
         weights = data.get('weights', {})
-
 
         # Parametry Firefly
         n_fireflies = int(data.get('n_fireflies', 25))
@@ -123,7 +128,8 @@ def optimize():
                 'alpha': alpha,
                 'beta_0': beta_0,
                 'gamma': gamma
-            }
+            },
+            erlang_cost_params=erlang_cost_params  # <<< NOWE
         )
 
         # KROK 4: Uruchom optymalizację

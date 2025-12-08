@@ -37,7 +37,9 @@ function OptimizationResults({ results }) {
 
   // Dane dla wykresu konwergencji (jeśli dostępne)
   const convergenceData = {
-    labels: Array.from({ length: results.results.optimized.solution_vector?.length || 0 }, (_, i) => i + 1),
+    labels: results.history?.best_values
+      ? results.history.best_values.map((_, i) => i + 1)
+      : [],
     datasets: [
       {
         label: 'Wartość funkcji celu',
@@ -49,17 +51,26 @@ function OptimizationResults({ results }) {
     ]
   };
 
-  // Dane dla wykresu porównania metryk
+  // Dane dla wykresu porównania metryk (system globalnie)
   const metricsComparisonData = {
-    labels: ['Czas odpowiedzi', 'Długość kolejki', 'Przepustowość', 'Liczba serwerów'],
+    labels: [
+      'Czas odpowiedzi',
+      'Średnia liczba w stacjach (L)',
+      'Średnia liczba oczekujących (Lq)',
+      'Przepustowość',
+      'Liczba serwerów',
+      'Śr. liczba zajętych serwerów'
+    ],
     datasets: [
       {
         label: 'Przed',
         data: [
           baseline.metrics.mean_response_time,
           baseline.metrics.mean_queue_length,
+          baseline.metrics.mean_waiting_queue_length ?? 0,
           baseline.metrics.throughput,
-          baseline.metrics.total_servers
+          baseline.metrics.total_servers,
+          baseline.metrics.busy_servers_total ?? 0
         ],
         backgroundColor: 'rgba(255, 107, 107, 0.6)',
         borderColor: 'rgb(255, 107, 107)',
@@ -70,8 +81,10 @@ function OptimizationResults({ results }) {
         data: [
           optimized.metrics.mean_response_time,
           optimized.metrics.mean_queue_length,
+          optimized.metrics.mean_waiting_queue_length ?? 0,
           optimized.metrics.throughput,
-          optimized.metrics.total_servers
+          optimized.metrics.total_servers,
+          optimized.metrics.busy_servers_total ?? 0
         ],
         backgroundColor: 'rgba(81, 207, 102, 0.6)',
         borderColor: 'rgb(81, 207, 102)',
@@ -80,22 +93,43 @@ function OptimizationResults({ results }) {
     ]
   };
 
-  // Dane dla wykresu kolejek na stacjach
+  // Dane dla wykresu liczby klientów na stacjach (Q_i = kolejka + obsługa)
   const queuesData = {
     labels: baseline.metrics.station_names,
     datasets: [
       {
-        label: 'Przed optymalizacją',
+        label: 'Przed optymalizacją (Q_i)',
         data: baseline.metrics.queue_lengths,
         backgroundColor: 'rgba(255, 107, 107, 0.6)',
         borderColor: 'rgb(255, 107, 107)',
         borderWidth: 2
       },
       {
-        label: 'Po optymalizacji',
+        label: 'Po optymalizacji (Q_i)',
         data: optimized.metrics.queue_lengths,
         backgroundColor: 'rgba(81, 207, 102, 0.6)',
         borderColor: 'rgb(81, 207, 102)',
+        borderWidth: 2
+      }
+    ]
+  };
+
+  // Wykres Lq (tylko oczekujący)
+  const waitingQueuesData = {
+    labels: baseline.metrics.station_names,
+    datasets: [
+      {
+        label: 'Przed optymalizacją (Lq_i)',
+        data: baseline.metrics.waiting_queue_lengths || [],
+        backgroundColor: 'rgba(255, 159, 67, 0.6)',
+        borderColor: 'rgb(255, 159, 67)',
+        borderWidth: 2
+      },
+      {
+        label: 'Po optymalizacji (Lq_i)',
+        data: optimized.metrics.waiting_queue_lengths || [],
+        backgroundColor: 'rgba(102, 126, 234, 0.6)',
+        borderColor: 'rgb(102, 126, 234)',
         borderWidth: 2
       }
     ]
@@ -117,6 +151,27 @@ function OptimizationResults({ results }) {
         data: optimized.metrics.utilizations.map(u => u * 100),
         backgroundColor: 'rgba(81, 207, 102, 0.6)',
         borderColor: 'rgb(81, 207, 102)',
+        borderWidth: 2
+      }
+    ]
+  };
+
+  // Nowy wykres: średnia liczba zajętych serwerów na stacji
+  const busyServersData = {
+    labels: baseline.metrics.station_names,
+    datasets: [
+      {
+        label: 'Przed optymalizacją (zajęte serwery)',
+        data: baseline.metrics.busy_servers_per_station || [],
+        backgroundColor: 'rgba(255, 193, 7, 0.6)',
+        borderColor: 'rgb(255, 193, 7)',
+        borderWidth: 2
+      },
+      {
+        label: 'Po optymalizacji (zajęte serwery)',
+        data: optimized.metrics.busy_servers_per_station || [],
+        backgroundColor: 'rgba(0, 123, 255, 0.6)',
+        borderColor: 'rgb(0, 123, 255)',
         borderWidth: 2
       }
     ]
@@ -151,12 +206,24 @@ function OptimizationResults({ results }) {
                   <strong>{baseline.metrics.mean_response_time.toFixed(4)} s</strong>
                 </div>
                 <div className="metric-row">
-                  <span>Średnia długość kolejki:</span>
+                  <span>Średnia liczba klientów na stacjach (L):</span>
                   <strong>{baseline.metrics.mean_queue_length.toFixed(2)}</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Średnia liczba oczekujących w kolejce (Lq):</span>
+                  <strong>{(baseline.metrics.mean_waiting_queue_length ?? 0).toFixed(2)}</strong>
                 </div>
                 <div className="metric-row">
                   <span>Przepustowość:</span>
                   <strong>{baseline.metrics.throughput.toFixed(4)} zadań/s</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Śr. liczba zajętych serwerów:</span>
+                  <strong>{(baseline.metrics.busy_servers_total ?? 0).toFixed(2)}</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Udział zajętych serwerów:</span>
+                  <strong>{((baseline.metrics.busy_servers_ratio ?? 0) * 100).toFixed(1)}%</strong>
                 </div>
                 <div className="metric-row">
                   <span>Wartość funkcji celu:</span>
@@ -175,12 +242,24 @@ function OptimizationResults({ results }) {
                   <strong>{optimized.metrics.mean_response_time.toFixed(4)} s</strong>
                 </div>
                 <div className="metric-row">
-                  <span>Średnia długość kolejki:</span>
+                  <span>Średnia liczba klientów na stacjach (L):</span>
                   <strong>{optimized.metrics.mean_queue_length.toFixed(2)}</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Średnia liczba oczekujących w kolejce (Lq):</span>
+                  <strong>{(optimized.metrics.mean_waiting_queue_length ?? 0).toFixed(2)}</strong>
                 </div>
                 <div className="metric-row">
                   <span>Przepustowość:</span>
                   <strong>{optimized.metrics.throughput.toFixed(4)} zadań/s</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Śr. liczba zajętych serwerów:</span>
+                  <strong>{(optimized.metrics.busy_servers_total ?? 0).toFixed(2)}</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Udział zajętych serwerów:</span>
+                  <strong>{((optimized.metrics.busy_servers_ratio ?? 0) * 100).toFixed(1)}%</strong>
                 </div>
                 <div className="metric-row">
                   <span>Wartość funkcji celu:</span>
@@ -188,6 +267,7 @@ function OptimizationResults({ results }) {
                 </div>
               </div>
             </div>
+
             {/* Inwestycja vs zysk */}
             {cost && cost.type === 'added_servers' && (
               <div className="investment-card">
@@ -300,6 +380,7 @@ function OptimizationResults({ results }) {
                 </div>
               </div>
             )}
+
             {/* Szczegóły stacji */}
             <div className="stations-details">
               <h3>📊 Szczegóły stacji</h3>
@@ -308,7 +389,9 @@ function OptimizationResults({ results }) {
                   <tr>
                     <th>Stacja</th>
                     <th>Serwery (przed → po)</th>
-                    <th>Kolejka (przed → po)</th>
+                    <th>L (klienci w stacji) przed → po</th>
+                    <th>Lq (oczekujący) przed → po</th>
+                    <th>Zajęte serwery (śr.) przed → po</th>
                     <th>Wykorzystanie (przed → po)</th>
                   </tr>
                 </thead>
@@ -328,6 +411,12 @@ function OptimizationResults({ results }) {
                         {baseline.metrics.queue_lengths[i].toFixed(2)} → {optimized.metrics.queue_lengths[i].toFixed(2)}
                       </td>
                       <td>
+                        {(baseline.metrics.waiting_queue_lengths?.[i] ?? 0).toFixed(2)} → {(optimized.metrics.waiting_queue_lengths?.[i] ?? 0).toFixed(2)}
+                      </td>
+                      <td>
+                        {(baseline.metrics.busy_servers_per_station?.[i] ?? 0).toFixed(2)} → {(optimized.metrics.busy_servers_per_station?.[i] ?? 0).toFixed(2)}
+                      </td>
+                      <td>
                         {(baseline.metrics.utilizations[i] * 100).toFixed(1)}% → {(optimized.metrics.utilizations[i] * 100).toFixed(1)}%
                       </td>
                     </tr>
@@ -342,48 +431,91 @@ function OptimizationResults({ results }) {
         return (
           <div className="charts-content">
             <div className="chart-container">
-              <h3>📈 Porównanie metryk</h3>
-              <Bar data={metricsComparisonData} options={{
-                responsive: true,
-                plugins: {
-                  legend: { position: 'top' },
-                  title: { display: false }
-                },
-                scales: {
-                  y: { beginAtZero: true }
-                }
-              }} />
+              <h3>📈 Porównanie metryk globalnych</h3>
+              <Bar
+                data={metricsComparisonData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: { position: 'top' },
+                    title: { display: false }
+                  },
+                  scales: {
+                    y: { beginAtZero: true }
+                  }
+                }}
+              />
             </div>
 
             <div className="chart-container">
-              <h3>📊 Długości kolejek na stacjach</h3>
-              <Bar data={queuesData} options={{
-                responsive: true,
-                plugins: {
-                  legend: { position: 'top' },
-                  title: { display: false }
-                },
-                scales: {
-                  y: { beginAtZero: true }
-                }
-              }} />
+              <h3>📊 Liczba klientów na stacjach (L_i = kolejka + obsługa)</h3>
+              <Bar
+                data={queuesData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: { position: 'top' },
+                    title: { display: false }
+                  },
+                  scales: {
+                    y: { beginAtZero: true }
+                  }
+                }}
+              />
+            </div>
+
+            <div className="chart-container">
+              <h3>⏳ Liczba oczekujących w kolejce (Lq_i)</h3>
+              <Bar
+                data={waitingQueuesData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: { position: 'top' },
+                    title: { display: false }
+                  },
+                  scales: {
+                    y: { beginAtZero: true }
+                  }
+                }}
+              />
+            </div>
+
+            <div className="chart-container">
+              <h3>🖥 Średnia liczba zajętych serwerów na stacji</h3>
+              <Bar
+                data={busyServersData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: { position: 'top' },
+                    title: { display: false }
+                  },
+                  scales: {
+                    y: { beginAtZero: true }
+                  }
+                }}
+              />
             </div>
 
             <div className="chart-container">
               <h3>⚡ Wykorzystanie serwerów (%)</h3>
-              <Bar data={utilizationData} options={{
-                responsive: true,
-                plugins: {
-                  legend: { position: 'top' },
-                  title: { display: false }
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    max: 100
+              <Bar
+                data={utilizationData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: { position: 'top' },
+                    title: { display: false }
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      max: 100
+                    }
                   }
-                }
-              }} />
+                }}
+              />
             </div>
 
             {/* Wykresy z backendu jako obrazy */}
@@ -391,6 +523,7 @@ function OptimizationResults({ results }) {
               <>
                 <div className="chart-container">
                   <h3>🔥 Konwergencja algorytmu Firefly</h3>
+                  {/* Możesz użyć też Line z convergenceData, ale zostawiam obraz z backendu */}
                   <img src={`data:image/png;base64,${plots.convergence}`} alt="Konwergencja" />
                 </div>
 
@@ -398,7 +531,7 @@ function OptimizationResults({ results }) {
                   <h3>📊 Szczegółowe porównanie</h3>
                   <img src={`data:image/png;base64,${plots.metrics}`} alt="Metryki" />
                 </div>
-                 {plots.response_time_percentiles && (
+                {plots.response_time_percentiles && (
                   <div className="chart-container">
                     <h3>⏱ Percentyle czasów odpowiedzi</h3>
                     <img

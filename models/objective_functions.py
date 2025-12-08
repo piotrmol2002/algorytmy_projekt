@@ -28,7 +28,7 @@ W UI BĘDZIESZ MÓGŁ WYBRAĆ, KTÓRĄ FUNKCJĘ UŻYWASZ!
 
 import numpy as np
 from typing import Dict, Any, List, Callable
-
+from math import factorial
 
 class ObjectiveFunctions:
     """
@@ -332,6 +332,99 @@ class ObjectiveFunctions:
 
         value = w1 * (-R) + w2 * X + w3 * (-L)
         return -value
+    @staticmethod
+    def erlang_cost_function(
+        metrics: Dict[str, Any],
+        cost_params: Dict[str, float] = None
+    ) -> float:
+        """
+        FUNKCJA 9: Koszt Erlang (wzór 4-208)
+
+        Implementacja funkcji kosztu typu Erlang C wg wzoru 4-208.
+
+        WYMAGANE DANE W `metrics`:
+        --------------------------
+        Zakładamy, że solver policzył już wielkości dla pojedynczego
+        systemu kolejkowego M/M/m/N i przekazuje:
+
+        - metrics['erlang_m']        = m   (liczba kanałów/serwerów)
+        - metrics['erlang_N']        = N   (maks. liczba zgłoszeń w systemie)
+        - metrics['erlang_rho']      = ρ   (intensywność ruchu, A = λ/μ)
+        - metrics['erlang_C_prime']  = lista/array C'_j, j=0..N
+
+        PARAMETRY KOSZTÓW:
+        ------------------
+        cost_params = {
+            'c1': koszt jednego kanału (np. serwera),
+            'c2': koszt oczekiwania/utrzymania zgłoszeń
+        }
+
+        DOMYŚLNIE:
+        ----------
+        c1 = 1.0
+        c2 = 1.0
+
+        WZÓR:
+        -----
+        f(m) = c₁·m + (c₂/(1+ρ))·[ ρN +
+                  Σ(j=m+1..N) C'ⱼ·(j!ρʲ)/(m! m^(j-m))
+                  ---------------------------------
+                  Σ(j=0..m) C'ⱼρʲ + Σ(j=m..N) C'ⱼ·(j!ρʲ)/(m! m^(j-m)) ]
+
+        Zwracamy wartość do MINIMALIZACJI.
+        """
+        if cost_params is None:
+            cost_params = {'c1': 1.0, 'c2': 1.0}
+
+        c1 = cost_params.get('c1', 1.0)
+        c2 = cost_params.get('c2', 1.0)
+
+        m = int(metrics['erlang_m'])
+        N = int(metrics['erlang_N'])
+        rho = float(metrics['erlang_rho'])
+        C_prime = metrics['erlang_C_prime']  # sekwencja długości >= N+1
+
+        if m <= 0:
+            # brak kanałów – koszt nieskończenie duży
+            return float('inf')
+
+        # Precompute m!
+        m_fact = factorial(m)
+
+        # Σ(j=0..m) C'_j ρ^j
+        sum_0_m = 0.0
+        for j in range(0, min(m, N) + 1):
+            sum_0_m += C_prime[j] * (rho ** j)
+
+        # Σ(j=m..N) C'_j (j! ρ^j) / (m! m^(j-m))
+        sum_m_N = 0.0
+        for j in range(m, N + 1):
+            sum_m_N += (
+                C_prime[j]
+                * factorial(j)
+                * (rho ** j)
+                / (m_fact * (m ** (j - m)))
+            )
+
+        denominator = sum_0_m + sum_m_N
+        if denominator == 0.0:
+            return float('inf')
+
+        # Σ(j=m+1..N) C'_j (j! ρ^j) / (m! m^(j-m))
+        num_sum = 0.0
+        for j in range(m + 1, N + 1):
+            num_sum += (
+                C_prime[j]
+                * factorial(j)
+                * (rho ** j)
+                / (m_fact * (m ** (j - m)))
+            )
+
+        fraction_term = num_sum / denominator
+        inner_bracket = rho * N + fraction_term
+
+        cost = c1 * m + (c2 / (1.0 + rho)) * inner_bracket
+        return float(cost)
 
 
 
@@ -406,6 +499,17 @@ OBJECTIVE_CATALOG = {
         'function': ObjectiveFunctions.weighted_objective,
         'unit': 'bezwymiarowe',
         'goal': 'maximize'
+    },
+    'erlang_cost_4_208': {
+        'name': 'Koszt Erlang (wzór 4-208)',
+        'description': (
+            'Funkcja kosztu dla systemu Erlang M/M/m/N według wzoru 4-208: '
+            'łączny koszt liczby kanałów (c₁·m) oraz kosztu oczekiwania/obciążenia '
+            'systemu zależnego od natężenia ruchu ρ i rozkładu stanów.'
+        ),
+        'function': ObjectiveFunctions.erlang_cost_function,
+        'unit': 'koszt (jednostki umowne)',
+        'goal': 'minimize'
     }
 }
 

@@ -111,12 +111,12 @@ const OBJECTIVE_FORMULAS = {
       </>
     ),
     legend: [
-        'f - wartość funkcji celu',
-        'wᵢ - waga dla i-tego kryterium',
-        'R - średni czas odpowiedzi',
-        'L - średnia długość kolejki',
-        'σ²(ρ) - wariancja wykorzystania',
-        'Cel: minimalizacja (wymaga zdefiniowania wag)'
+      'f - wartość funkcji celu',
+      'wᵢ - waga dla i-tego kryterium',
+      'R - średni czas odpowiedzi',
+      'L - średnia długość kolejki',
+      'σ²(ρ) - wariancja wykorzystania',
+      'Cel: minimalizacja (wymaga zdefiniowania wag)'
     ]
   },
   weighted_objective: {
@@ -133,6 +133,22 @@ const OBJECTIVE_FORMULAS = {
       'X – przepustowość (maksymalizacja)',
       'L – średnia długość kolejki (minimalizacja)',
       'Cel: maksymalizacja'
+    ]
+  },
+  erlang_cost_4_208: {
+    title: 'Koszt Erlang (wzór 4-208)',
+    formula: (
+      <>
+        f(m) = c₁·m + (c₂ / (1+ρ)) · [ ρN + P<sub>obsługi</sub> / P<sub>normalizacji</sub> ]
+      </>
+    ),
+    legend: [
+      'm – liczba kanałów (serwerów)',
+      'N – maksymalna liczba zgłoszeń w systemie',
+      'ρ – natężenie ruchu',
+      'c₁ – koszt jednego kanału',
+      'c₂ – koszt oczekiwania/obciążenia systemu',
+      'Cel: minimalizacja całkowitego kosztu (liczba serwerów + oczekiwanie)'
     ]
   }
 };
@@ -168,6 +184,11 @@ function NetworkForm({ objectives, onSubmit }) {
     profit_r: 10.0,
     profit_Cs: 1.0,
     profit_Cn: 0.5
+  });
+
+  const [erlangCostParams, setErlangCostParams] = useState({
+    erlang_c1: 1.0,
+    erlang_c2: 1.0
   });
 
   const [weightParams, setWeightParams] = useState({
@@ -208,7 +229,6 @@ function NetworkForm({ objectives, onSubmit }) {
     }
     setWeights(adjusted);
   };
-
 
   const handleNumStationsChange = (value) => {
     const newNum = parseInt(value);
@@ -257,7 +277,11 @@ function NetworkForm({ objectives, onSubmit }) {
       optimize_vars: ['num_servers'],
       server_min: serverMin,
       server_max: serverMax,
-      ...fireflyParams
+      // parametry Firefly
+      ...fireflyParams,
+      // parametry kosztu Erlang – zawsze wysyłamy, backend może użyć tylko przy właściwej funkcji celu
+      erlang_c1: erlangCostParams.erlang_c1,
+      erlang_c2: erlangCostParams.erlang_c2
     };
 
     stations.forEach((station, i) => {
@@ -462,6 +486,46 @@ function NetworkForm({ objectives, onSubmit }) {
                   min="0"
                 />
                 <small>Koszt utrzymania klienta w systemie</small>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Parametry kosztów dla funkcji "erlang_cost_4_208" */}
+        {selectedObjective === 'erlang_cost_4_208' && (
+          <div className="cost-params-section">
+            <h3>Parametry kosztu Erlang (wzór 4-208)</h3>
+            <div className="form-grid">
+              <div className="form-group">
+                <label htmlFor="erlang_c1">c₁ (koszt kanału / serwera)</label>
+                <input
+                  type="number"
+                  id="erlang_c1"
+                  step="0.1"
+                  value={erlangCostParams.erlang_c1}
+                  onChange={(e) => setErlangCostParams({
+                    ...erlangCostParams,
+                    erlang_c1: parseFloat(e.target.value)
+                  })}
+                  min="0"
+                />
+                <small>Stały koszt jednego kanału (serwera)</small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="erlang_c2">c₂ (koszt oczekiwania)</label>
+                <input
+                  type="number"
+                  id="erlang_c2"
+                  step="0.1"
+                  value={erlangCostParams.erlang_c2}
+                  onChange={(e) => setErlangCostParams({
+                    ...erlangCostParams,
+                    erlang_c2: parseFloat(e.target.value)
+                  })}
+                  min="0"
+                />
+                <small>Koszt związany z obciążeniem/oczekiwaniem w systemie</small>
               </div>
             </div>
           </div>
