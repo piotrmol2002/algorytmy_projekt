@@ -86,6 +86,10 @@ class MVASolver:
         - total_service_rate: Suma intensywności obsługi
         - num_customers: Liczba klientów w sieci
         - station_names: Nazwy stacji
+        - L: Średnia liczba zgłoszeń w systemie (total number in system)
+        - W: Średni czas przebywania zgłoszeń w systemie
+        - A: Bezwzględna zdolność obsługi systemu (absolute service capacity)
+        - Wq: Średni czas przebywania zgłoszeń w kolejce
 
         Returns:
             Słownik z metrykami wydajności
@@ -173,6 +177,10 @@ class MVASolver:
         # NOWE METRYKI:
         # - średnia liczba OCZEKUJĄCYCH w kolejce (Lq)
         # - średnia liczba zajętych kanałów
+        # - L - średnia liczba zgłoszeń w systemie
+        # - W - średni czas przebywania w systemie
+        # - A - bezwzględna zdolność obsługi systemu
+        # - Wq - średni czas przebywania w kolejce
         # ------------------------------------------------------------------
         waiting_queue_lengths: List[float] = []
         busy_servers_per_station: List[float] = []
@@ -193,6 +201,31 @@ class MVASolver:
 
         total_busy_servers = float(np.sum(busy_servers_per_station))
         total_servers = int(np.sum(m))
+
+        # ------------------------------------------------------------------
+        # METRYKI PROGRAMISTY 3:
+        # L - średnia liczba zgłoszeń w systemie (total number in system)
+        # W - średni czas przebywania zgłoszeń w systemie
+        # A - bezwzględna zdolność obsługi systemu (absolute service capacity)
+        # Wq - średni czas przebywania zgłoszeń w kolejce
+        # ------------------------------------------------------------------
+
+        # L = średnia liczba klientów w całym systemie (kolejka + obsługa)
+        L = float(mean_queue_length)
+
+        # W = średni czas przebywania w systemie (oczekiwanie + obsługa)
+        W = float(mean_response_time)
+
+        # A = bezwzględna zdolność obsługi = suma (m_i * μ_i) dla wszystkich stacji
+        # To maksymalna przepustowość systemu gdyby wszystkie serwery były w 100% zajęte
+        A = float(np.sum(m * mu))
+
+        # Wq = średni czas oczekiwania w kolejce (bez czasu obsługi)
+        # Z prawa Little'a: Lq = X * Wq  =>  Wq = Lq / X
+        if throughput > 0:
+            Wq = float(mean_waiting_queue_length / throughput)
+        else:
+            Wq = 0.0
         if len(utilizations) > 0:
             erlang_rho = float(sum(utilizations) / len(utilizations))
         else:
@@ -219,7 +252,12 @@ class MVASolver:
             'total_service_rate': float(np.sum(mu)),
             'num_customers': int(N),
             'station_names': self.network.station_names,
-             # DODATKOWE POLA DLA FUNKCJI ERLANGA (wzór 4-208)
+            # METRYKI PROGRAMISTY 3
+            'L': L,                             # Średnia liczba zgłoszeń w systemie
+            'W': W,                             # Średni czas przebywania w systemie
+            'A': A,                             # Bezwzględna zdolność obsługi systemu
+            'Wq': Wq,                           # Średni czas przebywania w kolejce
+            # DODATKOWE POLA DLA FUNKCJI ERLANGA (wzór 4-208)
             'erlang_m': total_servers,          # m – łączna liczba kanałów
             'erlang_N': int(N),                 # N – liczba klientów w systemie
             'erlang_rho': erlang_rho,           # ρ – przybliżone obciążenie systemu
@@ -249,6 +287,10 @@ class MVASolver:
                 'total_servers': metrics['total_servers'],
                 'busy_servers_total': metrics['busy_servers_total'],
                 'busy_servers_ratio': metrics['busy_servers_ratio'],
+                'L': metrics['L'],
+                'W': metrics['W'],
+                'A': metrics['A'],
+                'Wq': metrics['Wq'],
             },
             'stations': []
         }

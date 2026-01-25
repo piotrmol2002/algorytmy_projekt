@@ -54,20 +54,24 @@ function OptimizationResults({ results }) {
   // Dane dla wykresu porównania metryk (system globalnie)
   const metricsComparisonData = {
     labels: [
-      'Czas odpowiedzi',
-      'Średnia liczba w stacjach (L)',
-      'Średnia liczba oczekujących (Lq)',
-      'Przepustowość',
+      'Czas w systemie (W)',
+      'Czas w kolejce (Wq)',
+      'Liczba w systemie (L)',
+      'Liczba w kolejce (Lq)',
+      'Zdolność obsługi (A)',
+      'Przepustowość (X)',
       'Liczba serwerów',
-      'Śr. liczba zajętych serwerów'
+      'Zajęte serwery'
     ],
     datasets: [
       {
         label: 'Przed',
         data: [
-          baseline.metrics.mean_response_time,
-          baseline.metrics.mean_queue_length,
+          baseline.metrics.W ?? baseline.metrics.mean_response_time,
+          baseline.metrics.Wq ?? 0,
+          baseline.metrics.L ?? baseline.metrics.mean_queue_length,
           baseline.metrics.mean_waiting_queue_length ?? 0,
+          baseline.metrics.A ?? 0,
           baseline.metrics.throughput,
           baseline.metrics.total_servers,
           baseline.metrics.busy_servers_total ?? 0
@@ -79,9 +83,11 @@ function OptimizationResults({ results }) {
       {
         label: 'Po',
         data: [
-          optimized.metrics.mean_response_time,
-          optimized.metrics.mean_queue_length,
+          optimized.metrics.W ?? optimized.metrics.mean_response_time,
+          optimized.metrics.Wq ?? 0,
+          optimized.metrics.L ?? optimized.metrics.mean_queue_length,
           optimized.metrics.mean_waiting_queue_length ?? 0,
+          optimized.metrics.A ?? 0,
           optimized.metrics.throughput,
           optimized.metrics.total_servers,
           optimized.metrics.busy_servers_total ?? 0
@@ -202,19 +208,27 @@ function OptimizationResults({ results }) {
                   <strong>[{baseline.network.num_servers.join(', ')}]</strong>
                 </div>
                 <div className="metric-row">
-                  <span>Średni czas odpowiedzi:</span>
+                  <span>Średni czas odpowiedzi (W):</span>
                   <strong>{baseline.metrics.mean_response_time.toFixed(4)} s</strong>
                 </div>
                 <div className="metric-row">
-                  <span>Średnia liczba klientów na stacjach (L):</span>
-                  <strong>{baseline.metrics.mean_queue_length.toFixed(2)}</strong>
+                  <span>Średni czas w kolejce (Wq):</span>
+                  <strong>{(baseline.metrics.Wq ?? 0).toFixed(4)} s</strong>
                 </div>
                 <div className="metric-row">
-                  <span>Średnia liczba oczekujących w kolejce (Lq):</span>
+                  <span>Średnia liczba w systemie (L):</span>
+                  <strong>{(baseline.metrics.L ?? baseline.metrics.mean_queue_length).toFixed(2)}</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Średnia liczba w kolejce (Lq):</span>
                   <strong>{(baseline.metrics.mean_waiting_queue_length ?? 0).toFixed(2)}</strong>
                 </div>
                 <div className="metric-row">
-                  <span>Przepustowość:</span>
+                  <span>Bezwzględna zdolność obsługi (A):</span>
+                  <strong>{(baseline.metrics.A ?? 0).toFixed(4)} zadań/s</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Przepustowość (X):</span>
                   <strong>{baseline.metrics.throughput.toFixed(4)} zadań/s</strong>
                 </div>
                 <div className="metric-row">
@@ -238,19 +252,27 @@ function OptimizationResults({ results }) {
                   <strong>[{optimized.network.num_servers.join(', ')}]</strong>
                 </div>
                 <div className="metric-row">
-                  <span>Średni czas odpowiedzi:</span>
+                  <span>Średni czas odpowiedzi (W):</span>
                   <strong>{optimized.metrics.mean_response_time.toFixed(4)} s</strong>
                 </div>
                 <div className="metric-row">
-                  <span>Średnia liczba klientów na stacjach (L):</span>
-                  <strong>{optimized.metrics.mean_queue_length.toFixed(2)}</strong>
+                  <span>Średni czas w kolejce (Wq):</span>
+                  <strong>{(optimized.metrics.Wq ?? 0).toFixed(4)} s</strong>
                 </div>
                 <div className="metric-row">
-                  <span>Średnia liczba oczekujących w kolejce (Lq):</span>
+                  <span>Średnia liczba w systemie (L):</span>
+                  <strong>{(optimized.metrics.L ?? optimized.metrics.mean_queue_length).toFixed(2)}</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Średnia liczba w kolejce (Lq):</span>
                   <strong>{(optimized.metrics.mean_waiting_queue_length ?? 0).toFixed(2)}</strong>
                 </div>
                 <div className="metric-row">
-                  <span>Przepustowość:</span>
+                  <span>Bezwzględna zdolność obsługi (A):</span>
+                  <strong>{(optimized.metrics.A ?? 0).toFixed(4)} zadań/s</strong>
+                </div>
+                <div className="metric-row">
+                  <span>Przepustowość (X):</span>
                   <strong>{optimized.metrics.throughput.toFixed(4)} zadań/s</strong>
                 </div>
                 <div className="metric-row">
